@@ -24,6 +24,9 @@ if (-not (Test-Path $nrlExe)) {
 }
 
 New-Item -ItemType Directory -Force -Path $binDir | Out-Null
+# Replace fails if another shell still has ``nrl.exe`` loaded (Windows file lock).
+Get-Process -Name "nrl" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+Start-Sleep -Milliseconds 400
 Copy-Item -Force $nrlExe (Join-Path $binDir "nrl.exe")
 
 # Legacy path: older demos looked for ``%NRL_ROOT%\build\bin\nrl.exe`` (repo layout).
@@ -52,7 +55,22 @@ $pyDest = Join-Path $installRoot "py"
 New-Item -ItemType Directory -Force -Path $examplesDest | Out-Null
 New-Item -ItemType Directory -Force -Path (Join-Path $pyDest "nrlpy") | Out-Null
 Copy-Item -Path (Join-Path $root "examples\*") -Destination $examplesDest -Recurse -Force -ErrorAction SilentlyContinue
-Copy-Item -Recurse -Force (Join-Path $root "nrlpy\src\nrlpy\*") (Join-Path $pyDest "nrlpy")
+$nrlpySrc = Join-Path $root "nrlpy\src\nrlpy"
+$nrlpyDst = Join-Path $pyDest "nrlpy"
+# ``_core*.pyd`` is locked if Python imported nrlpy from this tree; stop only those PIDs (narrow match).
+$installMarker = "Programs\NRL"
+foreach ($wp in Get-CimInstance Win32_Process -Filter "Name='python.exe' OR Name='py.exe'" -ErrorAction SilentlyContinue) {
+    $cl = $wp.CommandLine
+    if ($null -ne $cl -and ($cl -like "*${installMarker}*" -or $cl -like "*$($installRoot.Replace('\', '/'))*")) {
+        Stop-Process -Id $wp.ProcessId -Force -ErrorAction SilentlyContinue
+    }
+}
+Start-Sleep -Milliseconds 600
+# Retries help if AV briefly scans the new exe/pyd.
+$null = & robocopy.exe $nrlpySrc $nrlpyDst /E /IS /IT /R:12 /W:2 /NFL /NDL /NJH /NJS
+if ($LASTEXITCODE -ge 8) {
+    throw "robocopy nrlpy failed (exit $LASTEXITCODE). Close Python/nrlpy sessions using $nrlpyDst then re-run install_nrl.ps1 -SkipBuild."
+}
 [Environment]::SetEnvironmentVariable("NRL_ROOT", $installRoot, "User")
 $env:NRL_ROOT = $installRoot
 
