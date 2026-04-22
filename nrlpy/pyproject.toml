@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nrlpy"
+version = "0.1.0"
+description = "Python front-end for the NRL machine-code engine."
+authors = [{ name = "Daniel Harding", email = "daniel@romanailabs.com" }]
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "RomanAILabs Business Source License 1.1 (RBSL 1.1)" }
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: C",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+]
+
+[project.scripts]
+nrlpy = "nrlpy.cli:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+packages = ["nrlpy"]
+include-package-data = true
+
+[tool.setuptools.package-data]
+nrlpy = ["py.typed", "_core.pyi", "*.pyd", "*.so"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "A", "S", "RUF"]
+ignore = ["S101"]
+
+[tool.mypy]
+strict = true
+python_version = "3.9"
+packages = ["nrlpy"]
+mypy_path = "src"

@@ -1,0 +1,9 @@
+# Minimal .nrl program for native CLI / nrlpy.
+# Supported keys: mode, profile, neurons, iterations, reps, threshold
+
+mode=bench
+profile=omega
+neurons=1048576
+iterations=16384
+reps=4
+threshold=8

@@ -1,0 +1,15 @@
+# =============================================================================
+# NRL AES-256 SYNTH locked digest (language/examples/aes256_locked.nrl)
+# =============================================================================
+# Same workload as aes256.nrl plus expected_fnv1a64. Requires native nrl that
+# understands the expected_fnv1a64 key (build from this repo; run ./build.ps1).
+# If you see "unknown key expected_fnv1a64", use aes256.nrl instead or upgrade nrl.
+# =============================================================================
+
+mode=bench
+profile=aes256-synth
+neurons=4096
+iterations=64
+reps=1
+threshold=6
+expected_fnv1a64=3040789423616326193

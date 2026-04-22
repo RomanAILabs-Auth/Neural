@@ -1,0 +1,66 @@
+# RomanAILabs Business Source License 1.1 (RBSL 1.1)
+# Software: NRL Engine and NrlPy Driver
+# Copyright (c) 2026 RomanAILabs - Daniel Harding. All Rights Reserved.
+
+### 1. Definitions
+"Licensed Work" means the NRL machine-code engine, NrlPy Python front-end,
+associated assembly kernels, compiler/runtime components, and any other software,
+documentation, or materials provided by RomanAILabs under this license.
+
+"Commercial Use" means any use of the Licensed Work:
+- To provide a service (including SaaS, PaaS, or hosted offerings) for which you
+  receive compensation, directly or indirectly.
+- In any product, library, or derivative work that is sold, licensed, or
+  distributed for a fee.
+- For internal operations of any for-profit entity with annual gross revenue
+  exceeding $1,000,000 USD (or equivalent), unless the use is strictly non-production
+  research, benchmarking, or evaluation.
+
+"Change Date" means, for each version of the Licensed Work, three (3) years
+from the date that version is first publicly released by RomanAILabs.
+
+### 2. Grant of License
+RomanAILabs grants you a non-exclusive, royalty-free, worldwide, non-transferable
+license to use, copy, modify, and distribute the Licensed Work solely for
+non-commercial, research, educational, and personal evaluation purposes.
+
+You may not use the Licensed Work for any Commercial Use without first obtaining
+a separate written commercial license from RomanAILabs.
+
+### 3. Additional Use Grant (Limited Commercial Exception)
+You may use the Licensed Work in production within your own internal tools or
+products provided that:
+- The Licensed Work is not the primary value or competitive feature of your offering, and
+- You do not offer the Licensed Work (or substantial parts of its functionality) as
+  a service to third parties.
+
+This Additional Use Grant does not permit building a competing high-performance
+compute engine, low-bit neural fabric runtime, or direct derivative service of
+NRL kernel functionality.
+
+### 4. Performance Promise / Automatic Conversion
+On the Change Date (or earlier at RomanAILabs' sole discretion), the license for
+that specific version of the Licensed Work automatically converts to the
+Apache License, Version 2.0 (or a later version chosen by RomanAILabs).
+After conversion, all prior restrictions on Commercial Use are lifted for that version.
+
+### 5. Attribution and Notices
+Any copy, modification, or derivative work must retain this license file, the
+above copyright notice, and the following prominent notice:
+
+"This software was originally released under the RomanAILabs Business Source
+License 1.1 by Daniel Harding / RomanAILabs."
+
+### 6. No Warranty; Limitation of Liability
+THE LICENSED WORK IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL ROMANAILABS OR
+DANIEL HARDING BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY ARISING FROM,
+OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR ITS USE.
+
+### 7. Termination
+This license terminates automatically if you breach any term. Upon termination,
+you must cease all use and destroy all copies of the Licensed Work.
+
+For commercial licensing, support contracts, custom kernel development, or
+enterprise use inquiries, contact: daniel@romanailabs.com

@@ -1,0 +1,9 @@
+# Locked digest variant; requires current nrl (see language/examples/aes256_locked.nrl).
+
+mode=bench
+profile=aes256-synth
+neurons=4096
+iterations=64
+reps=1
+threshold=6
+expected_fnv1a64=3040789423616326193

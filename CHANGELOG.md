@@ -1,0 +1,87 @@
+# Changelog
+
+All notable changes to NRL will be documented in this file.
+
+## [Unreleased]
+
+### Added
+- Initial architecture contract (`nrl-architecture.md`).
+- Initial legal and attribution files (`LICENSE`, `NOTICE`).
+- Bootstrap repository skeleton docs.
+- Prompt 1 runtime skeleton:
+  - public ABI version/CPU feature contract in `engine/include/nrl/nrl.h`
+  - runtime detection + dispatch scaffolding in `engine/src/cpuid.c`, `engine/src/dispatch.c`, `engine/src/capi.c`
+  - native CLI scaffold in `engine/src/main.c` (`--version`, `--features`, `variant`)
+  - cross-platform build scripts (`build.ps1`, `build.sh`)
+  - runtime smoke tests in `engine/tests/test_runtime.c`
+- Prompt 2 INT4 scalar kernel:
+  - real packed INT4 scalar implementation in `engine/src/braincore_int4_scalar.c`
+  - strict C-ABI argument validation in `engine/src/capi.c` for `nrl_v1_braincore_int4`
+  - dispatch binding updated to `scalar_ref`/`avx2_scalar_ref` lane reporting
+  - expanded runtime tests for scalar parity, determinism, and arg checks
+- Prompt 3 AVX2 kernel:
+  - AVX2 packed INT4 implementation in `engine/src/braincore_int4_avx2.c`
+  - dispatch upgraded to true AVX2 binding (`avx2`) with scalar fallback
+  - parity-lock tests added for scalar vs AVX2 equivalence across thresholds and tail handling
+- Prompt 4 dispatch reporting:
+  - added `nrl runtime` CLI command to surface version, CPU features, and active variant map
+- Prompt 5 CLI execution + benchmark profiles:
+  - added native `nrl run [neurons] [iters] [threshold] [profile]` command with checksum output
+  - added profile presets (`sovereign`, `adaptive`, `war-drive`, `zpm`)
+  - added native `nrl bench [neurons] [iters] [reps] [threshold] [profile]` command
+  - benchmark output includes elapsed time, updates/sec, and GOPS
+  - first local benchmark runs reached up to 20.246 GOPS with AVX2 path
+  - initial benchmark snapshot documented in `benchmarks/initial_results.md`
+- Prompt 6 ZPM static accelerator:
+  - added `engine/src/zpm_int4_static.c` exact static-input transition-collapse engine
+  - integrated `zpm` benchmark/run mode with skip-ratio and virtual throughput accounting
+  - expanded runtime tests to lock ZPM parity and stats accounting
+  - benchmark snapshots now show significant time-to-answer speedups and virtual GOPS uplift
+- Prompt 7 biomorphic control surface:
+  - added System 1 naming (`automatic`) as a profile alias for exact ZPM static execution
+  - added `nrl brain-map` CLI command with biological port mapping output
+  - expanded `nrl runtime` output with cognitive mode definitions
+  - updated architecture and README naming to `NRL (Neural)`
+- Prompt 8 omega fractal routing:
+  - added `engine/src/zpm_omega_router.c` lattice-of-lattices routed virtual execution lane
+  - added `omega` profile for `nrl run`/`nrl bench` with sparse wake/prune accounting
+  - added omega stats contract and runtime tests for determinism/stat sanity
+  - recorded first omega benchmark snapshot with 0.999998 skip ratio and high virtual throughput
+- Prompt 9 omega-hybrid throughput preservation:
+  - added `omega-hybrid` profile to keep native AVX2 executed throughput near sovereign lane
+  - extended omega router with active-floor policy and active-kernel mode selection
+  - benchmark snapshots now include a balanced mode (high executed GOPS + partial skip gains)
+- Prompt 10 NrlPy integration:
+  - added `nrlpy` package scaffold with typed runtime wrappers and CLI
+  - added CPython extension `nrlpy._core` bound to `libnrl` (`version/features/variant/braincore_int4`)
+  - added mode-aware native benchmark bridge (`runtime.bench_cli`)
+  - integrated nrlpy extension build and smoke tests into `build.ps1 -Tests`
+- Prompt 11 .nrl language path:
+  - added native `.nrl` parser/execution command (`nrl file <path.nrl>`) and `.nrl` shortcut execution
+  - added Python `.nrl` runner (`nrlpy <path.nrl>` via runtime bridge)
+  - added language spec and example files under `language/spec` and `language/examples`
+- Prompt 12 NRL vs C++ governance harness:
+  - added `benchmarks/nrl_vs_cpp.py` for locked apples-to-apples C++ (`-O0`/`-O3`) comparisons
+  - harness now emits machine-readable and markdown artifacts under `build/bench/`
+  - added speedup metrics (`speedup_vs_cpp_o0`, `speedup_vs_cpp_o3`) for each NRL profile
+  - updated `benchmarks/README.md` with usage and artifact contract
+- Prompt 13 lightweight introspection:
+  - added `nrl status`, `nrl inquire`, and `nrl chat` (plus `-status/-inquire/-chat` aliases)
+  - implemented rule-based command-intent responses for low-overhead operator interaction
+  - reinforced disciplined approach: no heavy language-learning path before safety hardening
+- Prompt 14 release and review packaging:
+  - added `scripts/release_check.ps1` and `scripts/release_check.sh` for one-command release sanity checks
+  - added `grok_review_handoff.md` to standardize external Grok review scope/output
+  - validated release check pipeline and artifact generation end-to-end
+- Prompt 15 production polish:
+  - added cross-OS installers with explicit LM/AI opt-in (`scripts/install_nrl.ps1`, `scripts/install_nrl.sh`)
+  - surfaced LM/AI opt-in status in `nrl status`
+  - rewrote root README with production install guide and human/LLM coding guidance
+  - added architecture completion audit section to `nrl-architecture.md`
+- `nrlpy demo` CLI subcommand (same ultimate demo as `nrl demo`, via `run_path`)
+- `nrl demo` CLI command: locates `examples/ultimate_power_demo.py`, sets `PYTHONPATH` to `nrlpy/src` (dev) or `%NRL_ROOT%\py` (install), spawns `python -m nrlpy.cli run …`; installers copy examples + `nrlpy` into `%LOCALAPPDATA%\Programs\NRL` / `~/.local/share/nrl` and set `NRL_ROOT`
+- Prompt 16 wrap (binary assimilation + epistemic contract):
+  - ABI: `nrl_v1_braincore_packed_bytes` in `nrl.h` / `capi.c`; runtime test in `engine/tests/test_runtime.c`
+  - CLI: `nrl assimilate`; `nrl inquire epistemic` topic in `engine/src/main.c`
+  - nrlpy: `braincore_packed_bytes`, `braincore_int4_inplace`, `assimilate_cli`, `compat` / `shell`, `nrlpy run` and `nrlpy assimilate` in CLI; extended smoke tests
+  - docs: `language/spec/nrl_physics_language_v0.md` (§6 epistemic/ZPM, §8 assimilation), `nrl-architecture.md` §2.4 epistemic compute, `examples/assimilate_llm_solver.py`, `nrlpy/README.md` updates
