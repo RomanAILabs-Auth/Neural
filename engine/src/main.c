@@ -118,7 +118,7 @@ static void print_usage(void) {
     puts("  nrl assimilate [neurons] [iters] [threshold]");
     puts("      raw INT4 lattice assimilation (binary tensor contract + checksum)");
     puts("  nrl bench [neurons] [iters] [reps] [threshold] [profile]");
-    puts("      profiles: +aes256-synth (synthetic mix + digest; see language/examples/aes256.nrl)");
+    puts("      profiles: +aes256-synth (synthetic mix benchmark; see language/examples/aes256.nrl)");
     puts("  nrl demo");
     puts("      run examples/ultimate_power_demo.py (Python + nrlpy on PYTHONPATH)");
 }
@@ -682,10 +682,7 @@ static uint64_t rotl_u64(uint64_t x, unsigned k) {
     return (x << k) | (x >> (unsigned)((64u - k) & 63u));
 }
 
-/*
- * Deterministic synthetic AES-style round mixing (NOT a cryptographic primitive).
- * Used for reproducible .nrl benchmarks + FNV-1a digest verification.
- */
+/* Deterministic 64-bit word mixing (not AES). Used for reproducible .nrl benchmarks + FNV digest. */
 static uint64_t nrl_aes256_synth_fnv1a64(uint64_t neurons,
                                          uint64_t iters,
                                          uint64_t reps,
@@ -745,10 +742,7 @@ static int cmd_aes256_synth_bench(const nrl_file_plan *plan) {
     const long double gmix = mix_ops / elapsed / 1e9L;
 
     puts("");
-    puts("  +-------------------------------------------------------------------------+");
-    puts("  |  NRL  AES-256  SYNTHETIC  MIX  BENCHMARK  (education / parity channel) |");
-    puts("  |  Not a cryptographic attack — deterministic XOR/rotate ladder only.   |");
-    puts("  +-------------------------------------------------------------------------+");
+    puts("NRL synthetic mix benchmark (not AES; deterministic XOR/rotate state update)");
     printf("  neurons=%llu  iterations=%llu  reps=%llu  round_factor=%u\n",
            (unsigned long long)plan->neurons,
            (unsigned long long)plan->iterations,
@@ -769,7 +763,7 @@ static int cmd_aes256_synth_bench(const nrl_file_plan *plan) {
             return 1;
         }
     } else {
-        puts("  VERIFY:           (no expected_fnv1a64 in .nrl — add key to lock digest)");
+        puts("  VERIFY:           skipped (no expected_fnv1a64 in control file)");
     }
     puts("");
     return 0;
@@ -818,7 +812,7 @@ static int cmd_brain_map(void) {
     free(inputs);
 
     if (rc != NRL_OK) {
-        fputs("nrl brain-map: omega probe kernel failed\n", stderr);
+        fputs("nrl brain-map: bench probe kernel failed\n", stderr);
         return 1;
     }
 
@@ -836,12 +830,8 @@ static int cmd_brain_map(void) {
     const size_t ref_packed = nrl_v1_braincore_packed_bytes((size_t)ref_neurons);
     const double ref_mib = ref_packed > 0 ? (double)ref_packed / (1024.0 * 1024.0) : 0.0;
 
-    const char *mode_label = "system1-automatic-omega";
+    const char *mode_label = "virtual-lane bench (single-shot)";
     const char *variant = nrl_v1_active_variant("braincore_int4");
-    const char *feeling =
-        skip_ratio > 0.999 ? "Calm / efficient / high epistemic skip (dark lattice)"
-                           : skip_ratio > 0.5 ? "Balanced automatic + deliberate load"
-                                              : "Compute-forward / low skip (System-2 tilt)";
 
     const uint32_t feat = nrl_v1_cpu_features();
     char feat_buf[96];
@@ -875,15 +865,14 @@ static int cmd_brain_map(void) {
 
     const double govern_pct =
         peak_b == 0 ? 0.0 : (100.0 * (double)cur_b / (double)peak_b);
-    const double pulse_hz = elapsed > 0 ? (1.0 / elapsed) * 0.25 : 0.0;
 
     puts("");
     puts("  ================================================================================");
-    puts("  NRL LIVE BRAIN-MAP — runtime dashboard (omega probe, single shot)");
+    puts("  NRL runtime snapshot (single-shot INT4 bench probe)");
     puts("  ================================================================================");
     puts("");
-    puts("  --- SYSTEM SUMMARY -------------------------------------------------------------");
-    printf("  Mode (live probe)     : %s\n", mode_label);
+    puts("  --- Summary --------------------------------------------------------------------");
+    printf("  Bench mode            : %s\n", mode_label);
     printf("  Active variant        : %s\n", variant);
     printf("  Virtual throughput    : %.3f GOPS  (baseline-equivalent / probe wall time)\n",
            virtual_gops);
@@ -896,17 +885,16 @@ static int cmd_brain_map(void) {
            (unsigned long long)stats.active_sublattices,
            (unsigned long long)stats.total_sublattices,
            (unsigned long long)stats.pruned_sublattices);
-    printf("  System feeling        : %s\n", feeling);
     puts("");
-    puts("  --- MEMORY & LATTICE -----------------------------------------------------------");
+    puts("  --- Memory ---------------------------------------------------------------------");
     printf("  Process RSS (now)     : %.2f MiB\n", cur_mib);
     printf("  Process peak (RSS)    : %.2f MiB\n", peak_mib);
-    printf("  Probe buffers (2x)    : %.2f MiB  (omega probe lattice INT4 packed)\n", probe_mib);
+    printf("  Probe buffers (2x)    : %.2f MiB  (packed INT4 lattice for probe)\n", probe_mib);
     printf("  Reference lattice     : %.2f MiB packed INT4 @ %llu neurons (display scale)\n",
            ref_mib,
            (unsigned long long)ref_neurons);
     puts("");
-    puts("  --- PORT STATUS (live + structural) ------------------------------------------");
+    puts("  --- Port map -------------------------------------------------------------------");
     puts("  PORT              | STATUS        | DETAIL");
     puts("  ------------------+---------------+------------------------------------------");
 
@@ -920,7 +908,7 @@ static int cmd_brain_map(void) {
             status = "Active";
             snprintf(detail,
                      sizeof(detail),
-                     "Omega virtual dispatch @ %llu neurons x %u iters (probe)",
+                     "Bench probe %llu neurons x %u iterations",
                      (unsigned long long)probe_neurons,
                      (unsigned)probe_iters);
             break;
@@ -930,7 +918,7 @@ static int cmd_brain_map(void) {
             break;
         case 2:
             status = skip_ratio > 0.99 ? "Dominant" : "Active";
-            snprintf(detail, sizeof(detail), "System-1 skip channel skip=%.5f", skip_ratio);
+            snprintf(detail, sizeof(detail), "skip_ratio=%.5f", skip_ratio);
             break;
         case 3:
             status = "Loaded";
@@ -956,7 +944,7 @@ static int cmd_brain_map(void) {
             break;
         case 7:
             status = rc == NRL_OK ? "Clear" : "Trip";
-            snprintf(detail, sizeof(detail), "Kernel rc=%d (omega probe)", (int)rc);
+            snprintf(detail, sizeof(detail), "last kernel status=%d", (int)rc);
             break;
         case 8:
             status = govern_pct > 92.0 ? "Warm" : "Stable";
@@ -965,10 +953,8 @@ static int cmd_brain_map(void) {
                      "Working set / peak ratio %.1f %% (process-scoped)", govern_pct);
             break;
         case 9:
-            status = "Pulsing";
-            snprintf(detail,
-                     sizeof(detail),
-                     "Synthetic scheduler tick ~%.0f Hz (from probe cadence)", pulse_hz);
+            status = "Idle";
+            snprintf(detail, sizeof(detail), "probe wall time %.3f s", elapsed);
             break;
         default:
             break;

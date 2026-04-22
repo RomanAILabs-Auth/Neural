@@ -402,10 +402,10 @@ def phase_omega_collapse_frames(exe: Path) -> None:
 
 
 # =============================================================================
-# PHASE E — Omega-hybrid: executed throughput preservation + partial skip
+# PHASE E — Hybrid profile: executed throughput preservation + partial skip
 # =============================================================================
 def phase_hybrid_echo(exe: Path) -> None:
-    title("PHASE E - OMEGA-HYBRID (EXECUTED GOPS + PARTIAL SKIP BALANCE)")
+    title("PHASE E — Hybrid profile (executed GOPS + partial skip balance)")
     d = bench_raw(exe, 1_048_576, 4096, 2, 8, "omega-hybrid")
     print_bench_frame("HYBRID SNAPSHOT", d)
 

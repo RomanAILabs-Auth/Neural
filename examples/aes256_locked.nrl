@@ -1,4 +1,4 @@
-# Locked digest variant; requires current nrl (see language/examples/aes256_locked.nrl).
+# Locked digest; requires current nrl (see language/examples/aes256_locked.nrl).
 
 mode=bench
 profile=aes256-synth

@@ -1,13 +1,6 @@
-# =============================================================================
-# NRL AES-256 SYNTHETIC MIX BENCHMARK  (language/examples/aes256.nrl)
-# =============================================================================
-# This control file drives the "aes256-synth" profile: a deterministic ladder
-# of XOR + 64-bit rotates over a 256-bit state vector. It is a throughput probe
-# for RomanAILabs tooling - NOT a real cryptographic attack and NOT real AES.
-#
-# Digest lockfile (expected_fnv1a64=...): use language/examples/aes256_locked.nrl
-# with a freshly built nrl from this repository (older nrl rejects unknown keys).
-# =============================================================================
+# Synthetic mix micro-benchmark (.nrl v0). Not AES-256; exercises a fixed XOR/rotate
+# ladder and prints FNV-1a over a 32-byte state. For digest lock, use aes256_locked.nrl
+# (requires nrl with expected_fnv1a64 parsing).
 
 mode=bench
 profile=aes256-synth

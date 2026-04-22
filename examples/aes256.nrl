@@ -1,6 +1,4 @@
-# See language/examples/aes256.nrl for the canonical header and documentation.
-# This copy exists so installs that ship ./examples/ can run the same benchmark.
-# For FNV digest verification use examples/aes256_locked.nrl (requires current nrl).
+# Portable copy of language/examples/aes256.nrl (install tree).
 
 mode=bench
 profile=aes256-synth

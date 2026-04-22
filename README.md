@@ -102,9 +102,9 @@ Version-0 files drive the same bench/run paths as the CLI. Shipped examples:
 ./build/bin/nrl file language/examples/aes256_locked.nrl   # after ./build.ps1 / ./build.sh
 ```
 
-### Live dashboard
+### Runtime snapshot
 
-`nrl brain-map` prints a **single-shot** omega probe plus process memory and a `PORT_*` status table (fast; not a full multi-second benchmark). Use it for demos and sanity checks alongside `nrl bench`.
+`nrl brain-map` runs one short INT4 bench probe, prints process RSS, and a fixed `PORT_*` table (seconds, not a full benchmark sweep). Use beside `nrl bench` for quick sanity checks.
 
 ### Python parity (`nrlpy`)
 
@@ -207,7 +207,7 @@ Installs **`nrl`** and **`nrlpy`** launchers under `~/.local/bin`, updates shell
 | `nrl status` / `-status` | Engine version, variant, cognitive lanes, LM/AI opt-in, health. |
 | `nrl inquire <topic>` | Deterministic operator help (`speed`, `epistemic`, `assimilate`, …). |
 | `nrl chat <message>` | Lightweight rule-based intent helper. |
-| `nrl brain-map` | Live dashboard: omega probe, memory sample, `PORT_*` table. |
+| `nrl brain-map` | Runtime snapshot: one-shot INT4 bench probe, RSS, `PORT_*` table. |
 | `nrl assimilate [N] [I] [T]` | Sovereign INT4 pass + `checksum_fnv1a64` (binary assimilation contract). |
 | `nrl demo` | Runs `examples/ultimate_power_demo.py` via Python (`PYTHONPATH` set to `nrlpy/src` or install `py/`). |
 | `nrlpy demo` | Same demo from Python entrypoint (`python -m nrlpy.cli demo`); uses `run_path` with injected `nrl` globals. |
