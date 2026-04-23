@@ -30,3 +30,5 @@ def test_adaptive_shadow_log_emits_jsonl(tmp_path: Path, monkeypatch: pytest.Mon
     ev = json.loads(line)
     assert ev["signal_id"] == "PLASTICITY_SHADOW_STUB"
     assert ev["action"] == "log_only"
+    assert "workload_id" in ev and "|" in ev["workload_id"]
+    assert len(ev.get("structural_hash", "")) == 64

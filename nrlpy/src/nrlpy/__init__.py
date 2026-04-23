@@ -6,6 +6,7 @@ from . import native
 from .compat import NRLRuntime, llm_globals
 from .learn_store import LearnStats, LearnStore, default_store
 from .plasticity import plasticity_snapshot
+from .shadow import control_plane_probe_identity, shadow_bench_pair
 from .seamless import fabric_pulse, injected_globals, is_prime, next_prime
 from .workload import (
     build_workload_descriptor,
@@ -68,6 +69,8 @@ __all__ = [
     "next_prime",
     "nrl_binary_path",
     "plasticity_snapshot",
+    "control_plane_probe_identity",
+    "shadow_bench_pair",
     "resolve_bench_profile_with_control_hints",
     "run_nrl_file",
     "structural_hash",

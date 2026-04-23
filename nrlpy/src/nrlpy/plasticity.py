@@ -27,11 +27,13 @@ def _maybe_emit_adaptive_shadow_stub() -> None:
         return
     from .evidence import append_immune_event
     from .paths import immune_evidence_log_paths
+    from .shadow import control_plane_probe_identity
 
     paths = immune_evidence_log_paths()
     if not paths:
         return
     path = paths[0]
+    probe = control_plane_probe_identity()
     append_immune_event(
         path,
         {
@@ -39,6 +41,10 @@ def _maybe_emit_adaptive_shadow_stub() -> None:
             "signal_id": "PLASTICITY_SHADOW_STUB",
             "action": "log_only",
             "message": "Adaptive plasticity snapshot: evidence hook (no lattice mutation).",
+            "workload_id": probe["workload_id"],
+            "structural_hash": probe["structural_hash"],
+            "profile": "sovereign",
+            "nrl_version": probe["descriptor"].get("nrl_version"),
         },
     )
 

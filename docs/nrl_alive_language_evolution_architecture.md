@@ -81,7 +81,7 @@ Sovereign: read-only / `disabled`. Adaptive: bounded writes with per-tick budget
 
 ### 4.4 `shadow_executor`
 
-Reference run vs candidate run → compare contracted observables → **promote** | **reject** | **defer**. No promotion without passing policy.
+Reference run vs candidate run → compare contracted observables → **promote** | **reject** | **defer**. No promotion without passing policy. **Nrlpy today:** `nrlpy.shadow.shadow_bench_pair` runs two `nrl bench` profiles (same descriptor dimensions), compares `executed_updates` / `skip_ratio`, and optionally appends a `SHADOW_BENCH_PAIR` `log_only` immune line keyed by the candidate `workload_id` / `structural_hash`.
 
 ### 4.5 `evidence_log`
 
