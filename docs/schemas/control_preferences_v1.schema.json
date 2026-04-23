@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://romanailabs.com/schemas/nrl/control_preferences_v1.schema.json",
+  "title": "NRL sandboxed CLI control preferences v1",
+  "description": "Written by native `nrl control` under build/control/preferences.json (operator hints only).",
+  "type": "object",
+  "required": [
+    "schema_id",
+    "updated_unix",
+    "recommended_profile",
+    "power_until_unix",
+    "throttle_hint"
+  ],
+  "properties": {
+    "schema_id": {
+      "type": "string",
+      "const": "nrl.control_preferences.v1"
+    },
+    "updated_unix": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Wall clock when the file was last written (seconds since Unix epoch)."
+    },
+    "recommended_profile": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Bench/run profile hint (e.g. sovereign, omega-hybrid)."
+    },
+    "power_until_unix": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "If greater than current time, nrlpy may treat recommended_profile as active for benches when hints are enabled."
+    },
+    "throttle_hint": {
+      "type": "string",
+      "enum": ["none", "conservative", "gated"],
+      "description": "conservative: CPU-throttle style intent; gated: sticky conservative bias (e.g. volatile-market phrasing)."
+    }
+  },
+  "additionalProperties": false
+}

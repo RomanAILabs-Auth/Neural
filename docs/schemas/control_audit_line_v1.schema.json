@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://romanailabs.com/schemas/nrl/control_audit_line_v1.schema.json",
+  "title": "NRL control plane audit JSONL line v1",
+  "description": "One object per line in build/control/control_audit.jsonl (native nrl control / nrl chat).",
+  "type": "object",
+  "required": ["ts_utc", "channel", "intent", "govern", "outcome", "raw"],
+  "properties": {
+    "ts_utc": {
+      "type": "string",
+      "minLength": 10,
+      "description": "UTC timestamp (ISO-8601-like, Z suffix from CLI)."
+    },
+    "channel": {
+      "type": "string",
+      "enum": ["chat", "control"],
+      "description": "Dispatch surface that handled the message."
+    },
+    "intent": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Classifier intent id (e.g. profile_omega_high_skip, trading_external_denied)."
+    },
+    "govern": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Govern verdict id (e.g. allow_advisory, allow_write, deny_trading_sandbox)."
+    },
+    "outcome": {
+      "type": "string",
+      "enum": ["blocked", "advisory", "defer_confirm", "error_io", "applied"]
+    },
+    "raw": {
+      "type": "string",
+      "description": "User text after minimal JSON escaping (quotes/backslashes/newlines sanitized)."
+    }
+  },
+  "additionalProperties": false
+}

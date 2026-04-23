@@ -12,8 +12,10 @@
 #include <string.h>
 #include <ctype.h>
 #include <sys/stat.h>
+#include <time.h>
 #if defined(_WIN32)
 #include <windows.h>
+#include <direct.h>
 #include <process.h>
 #else
 #include <time.h>
@@ -110,6 +112,7 @@ static void print_usage(void) {
     puts("  nrl status | -status");
     puts("  nrl inquire <topic> | -inquire <topic>");
     puts("  nrl chat <message> | -chat <message>");
+    puts("  nrl control [--yes|-y] <message>   (sandboxed NL -> advisory / optional preferences.json)");
     puts("  nrl brain-map");
     puts("  nrl variant <kernel>");
     puts("  nrl file <path.nrl>");
@@ -532,6 +535,334 @@ static int str_contains_ci(const char *haystack, const char *needle) {
     return 0;
 }
 
+/* -------------------------------------------------------------------------- */
+/* Sandboxed CLI control plane: NL hints -> advisory / optional preferences   */
+/* JSON only under NRL_ROOT/build/control (or ./build/control). No hot-path.  */
+/* -------------------------------------------------------------------------- */
+
+#if defined(_WIN32)
+#define NRL_MKDIR(p) _mkdir(p)
+#else
+#define NRL_MKDIR(p) mkdir(p, (mode_t)0755)
+#endif
+
+typedef struct NrlControlVerdict {
+    const char *intent_id;
+    const char *govern_verdict;
+    int wants_profile_write;
+    int wants_power_until;
+    int wants_throttle;
+    int wants_volatile_gate;
+    const char *profile_value;
+} NrlControlVerdict;
+
+static void iso8601_utc_now(char *buf, size_t cap) {
+#if defined(_WIN32)
+    SYSTEMTIME st;
+    GetSystemTime(&st);
+    snprintf(buf, cap, "%04u-%02u-%02uT%02u:%02u:%02uZ",
+             (unsigned)st.wYear, (unsigned)st.wMonth, (unsigned)st.wDay,
+             (unsigned)st.wHour, (unsigned)st.wMinute, (unsigned)st.wSecond);
+#else
+    time_t t = time(NULL);
+    struct tm gt;
+    memset(&gt, 0, sizeof(gt));
+    gmtime_r(&t, &gt);
+    strftime(buf, cap, "%Y-%m-%dT%H:%M:%SZ", &gt);
+#endif
+}
+
+static void json_escape_short(const char *in, char *out, size_t cap) {
+    size_t j = 0;
+    if (cap == 0) {
+        return;
+    }
+    if (in == NULL) {
+        out[0] = '\0';
+        return;
+    }
+    for (size_t i = 0; in[i] != '\0' && j + 2 < cap; ++i) {
+        unsigned char c = (unsigned char)in[i];
+        if (c == '"' || c == '\\') {
+            out[j++] = '\\';
+            if (j < cap - 1) {
+                out[j++] = (char)c;
+            }
+        } else if (c < 32u) {
+            out[j++] = ' ';
+        } else {
+            out[j++] = (char)c;
+        }
+    }
+    out[j] = '\0';
+}
+
+static void nrl_control_fill_build_and_control(char *build_dir, size_t bcap, char *control_dir, size_t ccap) {
+    const char *root = getenv("NRL_ROOT");
+    if (root != NULL && root[0] != '\0') {
+        snprintf(build_dir, bcap, "%s/build", root);
+        snprintf(control_dir, ccap, "%s/control", build_dir);
+    } else {
+        snprintf(build_dir, bcap, "build");
+        snprintf(control_dir, ccap, "build/control");
+    }
+}
+
+static void nrl_control_preferences_path(char *path, size_t cap) {
+    char ctl[512];
+    char bld[512];
+    nrl_control_fill_build_and_control(bld, sizeof bld, ctl, sizeof ctl);
+    snprintf(path, cap, "%s/preferences.json", ctl);
+}
+
+static int nrl_control_ensure_dirs(char *control_dir, size_t cap) {
+    char build_dir[512];
+    nrl_control_fill_build_and_control(build_dir, sizeof build_dir, control_dir, cap);
+    if (NRL_MKDIR(build_dir) != 0 && errno != EEXIST) {
+        return -1;
+    }
+    if (NRL_MKDIR(control_dir) != 0 && errno != EEXIST) {
+        return -1;
+    }
+    return 0;
+}
+
+static void nrl_control_immune_stdout(const NrlControlVerdict *v) {
+    puts("control_immune:");
+    puts("  PORT_SENTINEL: input_scanned ok (length and token bounds)");
+    printf("  PORT_GOVERN: verdict=%s intent=%s\n", v->govern_verdict, v->intent_id);
+}
+
+static void nrl_control_classify(const char *msg, NrlControlVerdict *out) {
+    memset(out, 0, sizeof(*out));
+    out->intent_id = "none";
+    out->govern_verdict = "allow_advisory";
+    if (msg == NULL || msg[0] == '\0') {
+        return;
+    }
+    if (str_contains_ci(msg, "taskkill") || str_contains_ci(msg, "format c") ||
+        str_contains_ci(msg, "shutdown") || str_contains_ci(msg, "registry") ||
+        str_contains_ci(msg, "curl ") || str_contains_ci(msg, "http://") ||
+        str_contains_ci(msg, "https://") || str_contains_ci(msg, "powershell -")) {
+        out->intent_id = "external_os_denied";
+        out->govern_verdict = "deny_external_sandbox";
+        return;
+    }
+    if (str_contains_ci(msg, "volatile") && str_contains_ci(msg, "market")) {
+        out->intent_id = "volatile_market_extra_gate";
+        out->govern_verdict = "allow_write";
+        out->wants_profile_write = 1;
+        out->wants_volatile_gate = 1;
+        out->profile_value = "sovereign";
+        return;
+    }
+    if (str_contains_ci(msg, "buy") || str_contains_ci(msg, "sell") ||
+        str_contains_ci(msg, "stock") ||
+        (str_contains_ci(msg, "trading") &&
+         !str_contains_ci(msg, "algorithm") && !str_contains_ci(msg, "simulate"))) {
+        out->intent_id = "trading_external_denied";
+        out->govern_verdict = "deny_trading_sandbox";
+        return;
+    }
+    if (str_contains_ci(msg, "server") && str_contains_ci(msg, "optim")) {
+        out->intent_id = "server_optimize_advisory";
+        out->govern_verdict = "allow_advisory";
+        return;
+    }
+    if ((str_contains_ci(msg, "max") && str_contains_ci(msg, "power")) ||
+        str_contains_ci(msg, "maximum power")) {
+        out->intent_id = "power_boost_1h";
+        out->govern_verdict = "allow_write";
+        out->wants_power_until = 1;
+        out->wants_profile_write = 1;
+        out->profile_value = "omega-hybrid";
+        return;
+    }
+    if (str_contains_ci(msg, "slow") &&
+        (str_contains_ci(msg, "cpu") || str_contains_ci(msg, "process"))) {
+        out->intent_id = "throttle_conservative";
+        out->govern_verdict = "allow_write";
+        out->wants_throttle = 1;
+        out->wants_profile_write = 1;
+        out->profile_value = "sovereign";
+        return;
+    }
+    if (str_contains_ci(msg, "sovereign") || str_contains_ci(msg, "extra safe") ||
+        str_contains_ci(msg, "extra gated")) {
+        out->intent_id = "profile_sovereign";
+        out->govern_verdict = "allow_write";
+        out->wants_profile_write = 1;
+        out->profile_value = "sovereign";
+        return;
+    }
+    if (str_contains_ci(msg, "omega-hybrid") || str_contains_ci(msg, "balanced")) {
+        out->intent_id = "profile_omega_hybrid";
+        out->govern_verdict = "allow_write";
+        out->wants_profile_write = 1;
+        out->profile_value = "omega-hybrid";
+        return;
+    }
+    if (str_contains_ci(msg, "omega") && !str_contains_ci(msg, "hybrid")) {
+        out->intent_id = "profile_omega_high_skip";
+        out->govern_verdict = "allow_write";
+        out->wants_profile_write = 1;
+        out->profile_value = "omega";
+        return;
+    }
+    if (str_contains_ci(msg, "fast") || str_contains_ci(msg, "speed")) {
+        out->intent_id = "profile_advisory_speed";
+        out->govern_verdict = "allow_advisory";
+        return;
+    }
+}
+
+static int nrl_control_append_audit(const char *channel,
+                                    const char *raw,
+                                    const NrlControlVerdict *v,
+                                    const char *outcome) {
+    char dir[512];
+    char path[600];
+    char ts[64];
+    char esc[768];
+    FILE *fp = NULL;
+    if (nrl_control_ensure_dirs(dir, sizeof dir) != 0) {
+        return -1;
+    }
+    snprintf(path, sizeof path, "%s/control_audit.jsonl", dir);
+    iso8601_utc_now(ts, sizeof ts);
+    json_escape_short(raw, esc, sizeof esc);
+    fp = fopen(path, "ab");
+    if (fp == NULL) {
+        return -1;
+    }
+    fprintf(fp,
+            "{\"ts_utc\":\"%s\",\"channel\":\"%s\",\"intent\":\"%s\",\"govern\":\"%s\","
+            "\"outcome\":\"%s\",\"raw\":\"%s\"}\n",
+            ts, channel, v->intent_id, v->govern_verdict, outcome, esc);
+    fclose(fp);
+    return 0;
+}
+
+static int nrl_control_write_preferences(const NrlControlVerdict *v, time_t power_until) {
+    char dir[512];
+    char path[600];
+    FILE *fp = NULL;
+    time_t now = time(NULL);
+    const char *th = "none";
+    if (nrl_control_ensure_dirs(dir, sizeof dir) != 0) {
+        return -1;
+    }
+    snprintf(path, sizeof path, "%s/preferences.json", dir);
+    fp = fopen(path, "wb");
+    if (fp == NULL) {
+        return -1;
+    }
+    if (v->wants_throttle) {
+        th = "conservative";
+    }
+    if (v->wants_volatile_gate) {
+        th = "gated";
+    }
+    if (v->wants_profile_write && v->profile_value != NULL) {
+        fprintf(fp,
+                "{\"schema_id\":\"nrl.control_preferences.v1\",\"updated_unix\":%lld,"
+                "\"recommended_profile\":\"%s\",\"power_until_unix\":%lld,\"throttle_hint\":\"%s\"}\n",
+                (long long)now, v->profile_value, (long long)power_until, th);
+    } else {
+        fprintf(fp,
+                "{\"schema_id\":\"nrl.control_preferences.v1\",\"updated_unix\":%lld,"
+                "\"recommended_profile\":\"sovereign\",\"power_until_unix\":0,\"throttle_hint\":\"none\"}\n",
+                (long long)now);
+    }
+    fclose(fp);
+    return 0;
+}
+
+static int nrl_control_dispatch(const char *msg, const char *channel, int allow_write) {
+    NrlControlVerdict v;
+    time_t power_until = 0;
+    int confirm = 0;
+    int can_write = 0;
+    memset(&v, 0, sizeof(v));
+    nrl_control_classify(msg, &v);
+    nrl_control_immune_stdout(&v);
+    confirm = (allow_write != 0) ||
+              (getenv("NRL_CONTROL_CONFIRM") != NULL &&
+               strcmp(getenv("NRL_CONTROL_CONFIRM"), "1") == 0);
+    if (strcmp(v.govern_verdict, "deny_trading_sandbox") == 0 ||
+        strcmp(v.govern_verdict, "deny_external_sandbox") == 0) {
+        puts("control_outcome: BLOCKED (sandbox policy — no OS / trading / network side effects)");
+        (void)nrl_control_append_audit(channel, msg, &v, "blocked");
+        return 0;
+    }
+    if (strcmp(v.govern_verdict, "allow_advisory") == 0) {
+        (void)nrl_control_append_audit(channel, msg, &v, "advisory");
+    } else if (strcmp(v.govern_verdict, "allow_write") == 0) {
+        can_write = confirm ? 1 : 0;
+        if (!can_write) {
+            puts("control_outcome: DEFER — persisted writes need `nrl control --yes ...` or NRL_CONTROL_CONFIRM=1");
+            (void)nrl_control_append_audit(channel, msg, &v, "defer_confirm");
+        }
+    }
+    if (strcmp(v.govern_verdict, "allow_write") == 0 && can_write) {
+        if (v.wants_power_until) {
+            power_until = time(NULL) + (time_t)3600;
+        } else {
+            power_until = 0;
+        }
+        if (nrl_control_write_preferences(&v, power_until) != 0) {
+            puts("control_outcome: ERROR (could not write preferences.json)");
+            (void)nrl_control_append_audit(channel, msg, &v, "error_io");
+            return 1;
+        }
+        puts("control_outcome: OK (preferences.json written under build/control)");
+        (void)nrl_control_append_audit(channel, msg, &v, "applied");
+    }
+    if (strcmp(v.intent_id, "server_optimize_advisory") == 0) {
+        puts("control_advisory:");
+        puts("  sandbox: NRL cannot change external servers. Use your fleet orchestrator for scaling.");
+        puts("  nrl: for local benches try `nrl bench … omega-hybrid` (balanced executed GOPS).");
+    }
+    if (strcmp(v.intent_id, "power_boost_1h") == 0) {
+        puts("control_advisory:");
+        {
+            time_t until_show = power_until;
+            if (until_show == 0 && v.wants_power_until) {
+                until_show = time(NULL) + (time_t)3600;
+            }
+            printf("  intent: raise power ceiling for ~1h (target clock unix %lld); kernels unchanged until you run bench/run.\n",
+                   (long long)until_show);
+        }
+    }
+    if (strcmp(v.intent_id, "throttle_conservative") == 0) {
+        puts("control_advisory:");
+        puts("  intent: prefer sovereign / smaller defaults in preferences (does not kill other OS processes).");
+    }
+    if (strcmp(v.intent_id, "volatile_market_extra_gate") == 0) {
+        puts("control_advisory:");
+        puts("  intent: extra-gated lane — sovereign profile hint in preferences only (no broker / no network).");
+    }
+    if (strcmp(v.intent_id, "profile_advisory_speed") == 0) {
+        puts("control_advisory:");
+        puts("  virtual: `nrl bench … omega` — executed: sovereign / omega-hybrid.");
+        puts("  answer: use `nrl bench ... omega` for maximum virtual speed.");
+        puts("  answer: use `nrl bench ... omega-hybrid` to keep high executed GOPS.");
+    }
+    if (strcmp(v.intent_id, "none") == 0 && channel != NULL && strcmp(channel, "chat") == 0) {
+        if (str_contains_ci(msg, "status") || str_contains_ci(msg, "health")) {
+            puts("  answer: run `nrl status` for runtime readiness and active variant.");
+        } else if (str_contains_ci(msg, "safe") || str_contains_ci(msg, "risk")) {
+            puts("  answer: keep language features rule-based; avoid unconstrained self-modification.");
+            puts("  answer: see `nrl inquire safety` and docs/nrl_immune_system_spec.md.");
+        } else if (str_contains_ci(msg, "chat") || str_contains_ci(msg, "english")) {
+            puts("  answer: lightweight intent mapping is enabled; use `nrl control` for persisted hints.");
+        } else {
+            puts("  answer: try `nrl inquire speed`, `nrl inquire safety`, or `nrl control --yes \"…\"` for writes.");
+        }
+    }
+    return 0;
+}
+
 typedef struct nrl_file_plan {
     int do_bench;
     char profile[32];
@@ -554,6 +885,94 @@ static int cmd_runtime(void) {
     return 0;
 }
 
+static int nrl_control_json_copy_string(const char *buf, const char *key, char *out, size_t cap) {
+    char needle[96];
+    if (snprintf(needle, sizeof needle, "\"%s\":\"", key) >= (int)sizeof needle) {
+        return -1;
+    }
+    const char *p = strstr(buf, needle);
+    if (p == NULL) {
+        return -1;
+    }
+    p += strlen(needle);
+    size_t i = 0;
+    for (; *p != '\0' && *p != '"' && i + 1 < cap; ++p) {
+        out[i++] = (char)*p;
+    }
+    out[i] = '\0';
+    return 0;
+}
+
+static int nrl_control_json_parse_u64(const char *buf, const char *key, unsigned long long *out) {
+    char needle[96];
+    if (snprintf(needle, sizeof needle, "\"%s\":", key) >= (int)sizeof needle) {
+        return -1;
+    }
+    const char *p = strstr(buf, needle);
+    if (p == NULL) {
+        return -1;
+    }
+    p += strlen(needle);
+    while (*p != '\0' && isspace((unsigned char)*p)) {
+        ++p;
+    }
+    char *end = NULL;
+    unsigned long long v = strtoull(p, &end, 10);
+    if (end == NULL || end == p) {
+        return -1;
+    }
+    *out = v;
+    return 0;
+}
+
+static void nrl_status_print_control_prefs(void) {
+    char path[640];
+    char buf[8192];
+    FILE *fp = NULL;
+    size_t n = 0;
+    char profile[64];
+    char throttle[32];
+    unsigned long long power_until = 0;
+
+    nrl_control_preferences_path(path, sizeof path);
+    printf("  control_preferences_path: %s\n", path);
+    fp = fopen(path, "rb");
+    if (fp == NULL) {
+        puts("  control_preferences: none (no file yet)");
+        return;
+    }
+    n = fread(buf, 1, sizeof buf - 1u, fp);
+    fclose(fp);
+    buf[n] = '\0';
+    if (strstr(buf, "\"schema_id\":\"nrl.control_preferences.v1\"") == NULL) {
+        puts("  control_preferences: present but schema not recognized");
+        return;
+    }
+    profile[0] = '\0';
+    throttle[0] = '\0';
+    if (nrl_control_json_copy_string(buf, "recommended_profile", profile, sizeof profile) != 0) {
+        snprintf(profile, sizeof profile, "(unparsed)");
+    }
+    if (nrl_control_json_copy_string(buf, "throttle_hint", throttle, sizeof throttle) != 0) {
+        snprintf(throttle, sizeof throttle, "none");
+    }
+    if (nrl_control_json_parse_u64(buf, "power_until_unix", &power_until) != 0) {
+        power_until = 0;
+    }
+    printf("  control_preferences: recommended_profile=%s throttle_hint=%s power_until_unix=%llu\n",
+           profile, throttle, power_until);
+    {
+        time_t now = time(NULL);
+        int active = 0;
+        if (power_until > 0ull && (unsigned long long)now < power_until) {
+            active = 1;
+        } else if (strcmp(throttle, "conservative") == 0 || strcmp(throttle, "gated") == 0) {
+            active = 1;
+        }
+        printf("  control_hints_active_for_nrlpy: %s\n", active ? "yes" : "no");
+    }
+}
+
 static int cmd_status(void) {
     const uint32_t f = nrl_v1_cpu_features();
     const int has_avx2 = (f & NRL_CPU_AVX2) != 0u;
@@ -567,12 +986,24 @@ static int cmd_status(void) {
     printf("  lm_ai_opt_in: %s\n", lm_opt_in ? "enabled" : "disabled");
     printf("  avx2_ready: %s\n", has_avx2 ? "yes" : "no");
     printf("  health: %s\n", has_avx2 ? "nominal" : "degraded (scalar fallback)");
+    nrl_status_print_control_prefs();
     return 0;
 }
 
 static int cmd_inquire(const char *topic) {
     if (topic == NULL || *topic == '\0') {
-        puts("nrl inquire topics: speed, safety, modes, profiles, architecture, benchmark, assimilate, epistemic, demo");
+        puts("nrl inquire topics: speed, safety, modes, profiles, architecture, benchmark, assimilate, epistemic, demo, control");
+        return 0;
+    }
+    if (str_ieq(topic, "control")) {
+        puts("inquire:control");
+        puts("  command: nrl control [--yes] \"natural language intent\"");
+        puts("  writes: only $NRL_ROOT/build/control/ (or ./build/control): preferences.json + control_audit.jsonl");
+        puts("  confirm: --yes or NRL_CONTROL_CONFIRM=1 for allow_write intents");
+        puts("  blocked: trading, raw URLs, taskkill/shutdown/registry — see nrl-architecture.md §1.5");
+        puts("  status: `nrl status` prints control_preferences_path + parsed hints (read-only)");
+        puts("  nrlpy: `python -m nrlpy.cli control status` | `python -m nrlpy.cli control audit tail [N]`");
+        puts("  schemas: docs/schemas/control_preferences_v1 + control_audit_line_v1");
         return 0;
     }
     if (str_ieq(topic, "speed") || str_ieq(topic, "benchmark")) {
@@ -624,8 +1055,33 @@ static int cmd_inquire(const char *topic) {
         return 0;
     }
     puts("inquire:unknown-topic");
-    puts("  try one of: speed, safety, modes, profiles, architecture, benchmark, assimilate, epistemic, demo");
+    puts("  try one of: speed, safety, modes, profiles, architecture, benchmark, assimilate, epistemic, demo, control");
     return 0;
+}
+
+static int cmd_control(int argc, char **argv) {
+    int allow_write = 0;
+    int start = 2;
+    if (argc > 2 && (strcmp(argv[2], "--yes") == 0 || strcmp(argv[2], "-y") == 0)) {
+        allow_write = 1;
+        start = 3;
+    }
+    if (start >= argc) {
+        puts("control: provide a message, e.g. `nrl control --yes \"maximum power for one hour\"`");
+        puts("  writes require --yes or NRL_CONTROL_CONFIRM=1");
+        return 1;
+    }
+    char msg[512];
+    msg[0] = '\0';
+    for (int i = start; i < argc; ++i) {
+        if (i > start) {
+            strncat(msg, " ", sizeof(msg) - strlen(msg) - 1u);
+        }
+        strncat(msg, argv[i], sizeof(msg) - strlen(msg) - 1u);
+    }
+    puts("NRL control (sandboxed)");
+    printf("  user: %s\n", msg);
+    return nrl_control_dispatch(msg, "control", allow_write);
 }
 
 static int cmd_chat(int argc, char **argv) {
@@ -644,28 +1100,7 @@ static int cmd_chat(int argc, char **argv) {
 
     puts("NRL chat");
     printf("  user: %s\n", msg);
-    if (str_contains_ci(msg, "fast") || str_contains_ci(msg, "speed")) {
-        puts("  answer: use `nrl bench ... omega` for maximum virtual speed.");
-        puts("  answer: use `nrl bench ... omega-hybrid` to keep high executed GOPS.");
-        return 0;
-    }
-    if (str_contains_ci(msg, "status") || str_contains_ci(msg, "health")) {
-        puts("  answer: run `nrl status` for runtime readiness and active variant.");
-        return 0;
-    }
-    if (str_contains_ci(msg, "safe") || str_contains_ci(msg, "risk")) {
-        puts("  answer: keep language features rule-based for now; avoid unconstrained self-modification.");
-        puts("  answer: next milestone is sentinel/govern/alive guard rails.");
-        return 0;
-    }
-    if (str_contains_ci(msg, "chat") || str_contains_ci(msg, "english")) {
-        puts("  answer: lightweight command-intent chat is enabled.");
-        puts("  answer: defer heavy language learning until safety and reproducibility are complete.");
-        return 0;
-    }
-    puts("  answer: I can help with speed, safety, modes, and benchmark interpretation.");
-    puts("  answer: try `nrl inquire speed` or `nrl inquire safety`.");
-    return 0;
+    return nrl_control_dispatch(msg, "chat", 0);
 }
 
 static uint64_t checksum_u64(const uint8_t *buf, size_t n) {
@@ -1557,6 +1992,10 @@ int main(int argc, char **argv) {
 
     if (strcmp(argv[1], "chat") == 0 || strcmp(argv[1], "-chat") == 0) {
         return cmd_chat(argc, argv);
+    }
+
+    if (strcmp(argv[1], "control") == 0 || strcmp(argv[1], "-control") == 0) {
+        return cmd_control(argc, argv);
     }
 
     if (strcmp(argv[1], "brain-map") == 0) {

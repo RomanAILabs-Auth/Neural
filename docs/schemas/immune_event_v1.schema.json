@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://romanailabs.com/schemas/nrl/immune_event_v1.schema.json",
+  "title": "NRL immune event v1",
+  "type": "object",
+  "required": ["schema_id", "ts_utc", "level", "signal_id", "action"],
+  "properties": {
+    "schema_id": {
+      "type": "string",
+      "const": "nrl.immune_event.v1"
+    },
+    "ts_utc": { "type": "string", "format": "date-time" },
+    "level": { "type": "integer", "minimum": 1, "maximum": 5 },
+    "signal_id": { "type": "string" },
+    "action": { "type": "string" },
+    "profile": { "type": "string" },
+    "workload_id": { "type": "string" },
+    "structural_hash": { "type": "string" },
+    "message": { "type": "string" },
+    "nrl_version": { "type": "string" },
+    "build_id": { "type": "string" }
+  },
+  "additionalProperties": true
+}

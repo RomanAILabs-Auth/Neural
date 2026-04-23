@@ -11,9 +11,18 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 import textwrap
 from pathlib import Path
 from typing import Any
+
+
+def _ensure_repo_nrlpy_on_path(root: Path) -> None:
+    src = root / "nrlpy" / "src"
+    if src.is_dir():
+        sp = str(src)
+        if sp not in sys.path:
+            sys.path.insert(0, sp)
 
 
 CPP_SRC = r"""
@@ -163,6 +172,16 @@ def main() -> int:
     args = parser.parse_args()
 
     root = _repo_root()
+    _ensure_repo_nrlpy_on_path(root)
+    from nrlpy.workload import build_workload_descriptor, workload_identity_block  # noqa: PLC0415
+
+    try:
+        from nrlpy import runtime  # noqa: PLC0415
+
+        nrl_version = runtime.version()
+    except Exception:
+        nrl_version = None
+
     nrl = _nrl_bin(root)
     zig = _zig(root)
     out_dir = root / "build" / "bench"
@@ -225,6 +244,16 @@ def main() -> int:
         },
         "nrl_profiles": nrl_results,
     }
+    desc = build_workload_descriptor(
+        harness_id="nrl_vs_cpp",
+        neurons=args.neurons,
+        iterations=args.iterations,
+        reps=args.reps,
+        threshold=args.threshold,
+        profiles=profiles,
+        nrl_version=nrl_version,
+    )
+    artifact["workload_identity"] = workload_identity_block(desc)
 
     json_path = out_dir / "nrl_vs_cpp.json"
     json_path.write_text(json.dumps(artifact, indent=2), encoding="utf-8")

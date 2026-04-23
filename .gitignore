@@ -23,3 +23,6 @@ __pycache__/
 Thumbs.db
 .vscode/
 .idea/
+
+# Local R&D harness (not published with the main tree)
+mell/

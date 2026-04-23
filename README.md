@@ -4,74 +4,78 @@
 [![Python](https://img.shields.io/badge/python-3.9%2B-3776AB.svg?logo=python&logoColor=white)](./nrlpy/pyproject.toml)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-0A0A0A.svg)](./README.md#quick-start)
 
-**Engine-first neural execution on CPU.**  
-NRL is a low-bit machine-code stack: hand-tuned INT4 lattice kernels, load-time dispatch, and strict separation between **System 2** (deliberate, full-step) and **System 1** (ZPM / Omega compute-avoidance) lanes. Control planes are the native `nrl` CLI, the `nrlpy` Python front-end, and a minimal `.nrl` orchestration surface.
+**NRL** is a CPU-first stack for **packed INT4 lattice dynamics**: scalar reference and AVX2 hot paths, load-time dispatch, and multiple **execution profiles** that trade **fully materialized neuron updates** against **pruned or collapsed schedules** while preserving defined accounting invariants (`executed_updates`, `baseline_equiv_updates`, `skip_ratio`, `virtual_gops`). **NrlPy** exposes the same ABI and native CLI bridges from Python. **`.nrl` v0** is a minimal key-value control format for reproducible bench and run invocations.
 
-Copyright (c) RomanAILabs - Daniel Harding (GitHub: RomanAILabs-Auth)  
-Honored collaborators: Grok/xAI, Gemini-Flash/Google, ChatGPT-5.4/OpenAI, Cursor  
-Contact: `daniel@romanailabs.com` | `romanailabs@gmail.com` | `romanailabs.com`
-
----
-
-## Core contract
-
-- **Machine-code-first hot path**: scalar reference plus AVX2 INT4 execution; feature selection at init, not inside inner loops.
-- **One ABI, multiple surfaces**: `libnrl` (`nrl_v1_*`) backs both `nrl` and `nrlpy._core` without Python inside kernels.
-- **Reproducible claims**: published throughput comparisons use locked profiles and machine-readable artifacts (see [Benchmarks](#benchmarks) and [`benchmarks/`](./benchmarks/)).
-- **Governed plasticity**: adaptive and “fast” lanes are bounded, logged, and documented; long-term guard rails are specified in [`docs/nrl_immune_system_spec.md`](./docs/nrl_immune_system_spec.md).
-- **Living architecture**: scope, phase, and engineering decisions are tracked in [`nrl-architecture.md`](./nrl-architecture.md).
+Copyright (c) RomanAILabs — Daniel Harding (GitHub: RomanAILabs-Auth)  
+Collaborators: Grok/xAI, Gemini-Flash/Google, ChatGPT-5.4/OpenAI, Cursor  
+Contact: `daniel@romanailabs.com` · `romanailabs@gmail.com` · `romanailabs.com`
 
 ---
 
-## Kernel and control surface
+## What this repository is
 
-| Area | Responsibility |
-|------|----------------|
-| `braincore_int4` | Packed INT4 lattice update (2 neurons / byte); primary production kernel. |
-| ZPM static | Exact transition-collapse for static-input muscle-memory (`zpm` / `automatic`). |
-| Omega / Omega-hybrid | Fractal-routed virtual lane + hybrid executed-throughput preservation. |
-| `.nrl` v0 | Key-value run/bench control files (`mode`, `profile`, `neurons`, …). |
-| Assimilation | `nrl assimilate` and `nrlpy` inplace buffers share the same packed layout and checksum contract. |
+| Layer | Role |
+|-------|------|
+| **`libnrl` / `nrl_v1_*`** | Stable C ABI: INT4 packed layout, `braincore_int4`, feature detection, variant reporting. |
+| **Native `nrl`** | CLI: build, bench, assimilate, `.nrl` execution, status, diagnostics. |
+| **`nrlpy`** | Typed Python API, `nrlpy._core` extension, subprocess bridges to `nrl bench` / `nrl assimilate` / `nrl file`. |
+| **Profiles** | Named presets (`sovereign`, `adaptive`, `war-drive`, `zpm`, `automatic`, `omega`, `omega-hybrid`) selecting iterative kernels, **static transition collapse** for fixed inputs, or **hierarchical sparse routing** with optional pruning; see [Architecture](./nrl-architecture.md). |
 
-Profiles (runtime):
+Design principles (see [`nrl-architecture.md`](./nrl-architecture.md) for contracts):
 
-| Lane | Profiles |
-|------|----------|
-| System 2 (deliberate) | `sovereign`, `adaptive`, `war-drive` |
-| System 1 (automatic) | `zpm`, `automatic`, `omega`, `omega-hybrid` |
+- **Machine-code hot path**: no allocation and no CPU feature branching inside inner update loops; dispatch fixed at init.
+- **One ABI, multiple surfaces**: Python never executes kernel inner loops; it marshals buffers and CLI subprocesses.
+- **Reproducible reporting**: benchmarks emit stable `key: value` lines suitable for parsers and locked harnesses under [`benchmarks/`](./benchmarks/).
+- **Governance**: bounded adaptation and runtime safety directions are specified in [`docs/nrl_immune_system_spec.md`](./docs/nrl_immune_system_spec.md).
+
+---
+
+## Execution modes (conceptual)
+
+NRL distinguishes two **families** of profile (CLI names unchanged):
+
+| Family | Profiles | Mechanism (summary) |
+|--------|----------|------------------------|
+| **Full iterative** | `sovereign`, `adaptive`, `war-drive` | Every timestep applies the packed INT4 update across the lattice (AVX2 or scalar); `executed_updates` equals `baseline_equiv_updates` on the bench path. |
+| **High-avoidance** | `zpm`, `automatic` | For **static** drive fields, a **precomputed transition map** applies k logical iterations in one pass; `skip_ratio` is large; `virtual_gops` reflects baseline-equivalent work per wall second. |
+| **Sparse hierarchical** | `omega` | Fixed-size **sub-lattices** with wake/prune policy; most baseline work is skipped by routing; very high `virtual_gops`, low `executed_updates`. |
+| **Sparse + throughput floor** | `omega-hybrid` | Same router, but a **minimum active sub-lattice count** forces dense AVX2 work on a subset so `executed_gops` stays high while retaining partial skip gains. |
+
+**`aes256-synth`**: deterministic XOR/rotate micro-benchmark over a 32-byte state; **not** AES-256. See [`language/examples/aes256.nrl`](./language/examples/aes256.nrl).
 
 ---
 
 ## Benchmarks
 
-NRL publishes benchmarks as **repeatable CLI runs** with **stable, parseable stdout** (`nrl bench`, `nrl assimilate`, `.nrl` control files). Treat any numbers in this README as **illustrative** unless you attach fresh artifacts from your own machine.
+Official numbers require **locked commands**, **`nrl --version`**, and **generated artifacts** (e.g. from [`benchmarks/nrl_vs_cpp.py`](./benchmarks/nrl_vs_cpp.py)). Figures in this README are illustrative.
 
-### Native CLI (`nrl bench`)
+### `nrl bench`
 
 ```text
 nrl bench <neurons> <iterations> <reps> <threshold> <profile>
 ```
 
-| Profile | Lane | What to read first |
-|---------|------|---------------------|
-| `sovereign` | System 2 | `executed_gops` — full-step INT4 baseline. |
-| `adaptive`, `war-drive` | System 2 | Same shape as sovereign; different default scale in `nrl run`. |
-| `zpm`, `automatic` | System 1 | `skip_ratio`, `virtual_gops` vs `executed_gops`; semantics match sovereign accounting. |
-| `omega` | System 1 | Very high `virtual_gops`; `skip_ratio` near 1; `executed_updates` stays small vs `baseline_equiv_updates`. |
-| `omega-hybrid` | System 1 | Balance of skip gains and executed throughput (`executed_gops` remains meaningful). |
-| `aes256-synth` | Synthetic | Deterministic XOR/rotate mix + `state_fnv1a64` (see `.nrl` examples); **not** real AES. |
+| Profile | Read first | Notes |
+|---------|------------|--------|
+| `sovereign` | `executed_gops` | Reference full-iteration INT4 throughput. |
+| `adaptive`, `war-drive` | `executed_gops` | Same kernel class as `sovereign`; different default scale in `nrl run`. |
+| `zpm`, `automatic` | `skip_ratio`, `virtual_gops` | Static-input collapse; parity-checked vs iterative semantics on supported inputs. |
+| `omega` | `virtual_gops`, `skip_ratio`, sub-lattice stats | Hierarchical sparse execution; interpret `virtual_gops` with accounting in mind. |
+| `omega-hybrid` | `executed_gops` and `virtual_gops` | Hybrid: enforced active sub-lattice floor + skips elsewhere. |
+| `aes256-synth` | `state_fnv1a64`, `mix_throughput` | Synthetic mix only; optional `expected_fnv1a64` in `.nrl` on current `nrl`. |
 
-**Key fields** (machine-readable `key: value` lines):
+**Output fields** (representative):
 
 | Field | Meaning |
 |-------|---------|
-| `elapsed_s` | Wall time for the timed `reps` loop (after warmup). |
-| `executed_updates` / `baseline_equiv_updates` | Hardware work vs nominal full-lattice work. |
-| `skip_ratio` | `1 − executed/baseline` on the bench window. |
-| `executed_gops` | Executed neuron-updates per second, in GOPS. |
-| `virtual_gops` | Baseline-equivalent rate from the same wall clock (Omega / ZPM “virtual” accounting). |
+| `elapsed_s` | Timed interval after warmup. |
+| `executed_updates` | Hardware-applied packed updates in the window. |
+| `baseline_equiv_updates` | Nominal full-lattice work units for the same `(neurons, iterations, reps)`. |
+| `skip_ratio` | `1 − executed/baseline` (bench window). |
+| `executed_gops` | Executed updates per second (10⁹). |
+| `virtual_gops` | `baseline_equiv_updates / elapsed_s` (10⁹); rises when wall time drops via collapse or pruning. |
 
-**Smoke commands** (after `./build.ps1` or `./build.sh`; adjust sizes for slower CPUs):
+**Smoke commands** (resize for slower hosts):
 
 ```powershell
 .\build\bin\nrl.exe bench 1048576 4096 6 8 sovereign
@@ -85,40 +89,37 @@ nrl bench <neurons> <iterations> <reps> <threshold> <profile>
 ./build/bin/nrl bench 1048576 16384 4 8 omega
 ```
 
-### `.nrl` orchestration
+### `.nrl` v0
 
-Version-0 files drive the same bench/run paths as the CLI. Shipped examples:
-
-| File | Role |
-|------|------|
-| [`language/examples/omega_pass.nrl`](./language/examples/omega_pass.nrl) | Locked Omega bench parameters (good regression shape). |
-| [`language/examples/aes256.nrl`](./language/examples/aes256.nrl) | **Synthetic** XOR/rotate throughput (not real AES). Runs on any `.nrl`-capable `nrl`. |
-| [`language/examples/aes256_locked.nrl`](./language/examples/aes256_locked.nrl) | Same workload + `expected_fnv1a64` digest check; **requires a current `nrl` build** from this tree (older binaries report `unknown key`). |
-| [`examples/aes256.nrl`](./examples/aes256.nrl) | Same as `language/examples/aes256.nrl`; copied beside demos on install. |
+| File | Purpose |
+|------|---------|
+| [`language/examples/omega_pass.nrl`](./language/examples/omega_pass.nrl) | Regression-oriented bench parameters for the sparse hierarchical profile. |
+| [`language/examples/aes256.nrl`](./language/examples/aes256.nrl) | Portable synthetic mix (no digest key). |
+| [`language/examples/aes256_locked.nrl`](./language/examples/aes256_locked.nrl) | Same + `expected_fnv1a64` (requires parser support in your `nrl` build). |
 
 ```bash
 ./build/bin/nrl file language/examples/omega_pass.nrl
 ./build/bin/nrl file language/examples/aes256.nrl
-./build/bin/nrl file language/examples/aes256_locked.nrl   # after ./build.ps1 / ./build.sh
+./build/bin/nrl file language/examples/aes256_locked.nrl
 ```
 
 ### Runtime snapshot
 
-`nrl brain-map` runs one short INT4 bench probe, prints process RSS, and a fixed `PORT_*` table (seconds, not a full benchmark sweep). Use beside `nrl bench` for quick sanity checks.
+`nrl brain-map` runs one short INT4 bench probe, prints RSS, and a fixed **`PORT_*`** status table for quick inspection (not a multi-configuration sweep).
 
-### Python parity (`nrlpy`)
+### Python (`nrlpy`)
 
-`python -m nrlpy.cli bench …` shells out to the same native `nrl bench` binary (resolved via `NRL_BIN`, `NRL_ROOT`, or repo `build/bin`). Use it when benchmarks are driven from notebooks or CI.
+`python -m nrlpy.cli bench …` invokes the same native `nrl bench` (binary resolved via `NRL_BIN`, `NRL_ROOT`, or repo `build/bin`). `nrlpy run` / `nrlpy <script.py>` inject assimilation globals for control-plane scripts plus **seamless builtins** (`next_prime`, `is_prime`, `fabric_pulse`) so normal Python files can run without `import nrlpy` (see [`nrlpy/README.md`](./nrlpy/README.md) and [`examples/prime.py`](./examples/prime.py)). Primality stays deterministic Python; the INT4 extension is still touched for attestation.
 
-### Artifacts and governance
+### Artifacts
 
-| Artifact | Purpose |
-|----------|---------|
-| [`benchmarks/initial_results.md`](./benchmarks/initial_results.md) | Narrative snapshot (regenerate before citing externally). |
-| [`benchmarks/nrl_vs_cpp.py`](./benchmarks/nrl_vs_cpp.py) | Locked harness → `build/bench/nrl_vs_cpp.json` + `.md` (gitignored until generated). |
-| [`benchmarks/README.md`](./benchmarks/README.md) | Harness layout and conventions. |
+| Path | Role |
+|------|------|
+| [`benchmarks/initial_results.md`](./benchmarks/initial_results.md) | Narrative snapshot; regenerate before external citation. |
+| [`benchmarks/nrl_vs_cpp.py`](./benchmarks/nrl_vs_cpp.py) | Locked harness → `build/bench/nrl_vs_cpp.{json,md}`. |
+| [`benchmarks/README.md`](./benchmarks/README.md) | Harness conventions. |
 
-**Policy:** do not cite throughput in papers, posts, or decks without attaching the exact command line, engine version (`nrl --version`), and generated artifact or log excerpt from the same run.
+**Publication policy:** cite throughput only with command line, engine version, and artifact or log excerpt from the same run.
 
 ---
 
@@ -135,8 +136,6 @@ Version-0 files drive the same bench/run paths as the CLI. Shipped examples:
 .\build\bin\nrl.exe demo
 ```
 
-Python (from repo root, with `PYTHONPATH=nrlpy\src` or after `pip install -e nrlpy`):
-
 ```powershell
 $env:PYTHONPATH = "nrlpy\src"
 python -m nrlpy.cli --version
@@ -146,7 +145,7 @@ python -m nrlpy.cli run examples\ultimate_power_demo.py
 python -m nrlpy.cli demo
 ```
 
-### POSIX (Linux / macOS)
+### Linux / macOS
 
 ```bash
 ./build.sh Release 1
@@ -166,13 +165,9 @@ python3 -m nrlpy.cli run examples/ultimate_power_demo.py
 python3 -m nrlpy.cli demo
 ```
 
-`.nrl` examples:
-
 ```bash
 ./build/bin/nrl file language/examples/omega_pass.nrl
 ./build/bin/nrl file language/examples/aes256.nrl
-./build/bin/nrl file language/examples/aes256_locked.nrl   # digest verify; needs freshly built nrl
-# or pass the path directly:
 ./build/bin/nrl language/examples/omega_pass.nrl
 ```
 
@@ -184,119 +179,84 @@ python3 -m nrlpy.cli demo
 
 ```powershell
 cd C:\path\to\NRL
-.\scripts\install_nrl.ps1 -OptInLMAI
+.\scripts\install_nrl.ps1
 ```
 
-Installs `nrl.exe` and **`nrlpy.cmd`** under `%LOCALAPPDATA%\Programs\NRL\bin`, updates PATH, writes `%USERPROFILE%\.nrl\consent.json`, and sets `NRL_LM_AI_OPT_IN` when opted in. Also sets user **`NRL_ROOT`** to `%LOCALAPPDATA%\Programs\NRL` and copies **`examples/`** + **`py/nrlpy/`** so **`nrl demo`** / **`nrlpy script.py`** work without a checkout. **Open a new PowerShell** after install so `nrlpy` is recognized.
+Installs `nrl.exe`, `nrlpy.cmd`, mirrored **`build\bin\nrl.exe`** for legacy path expectations, copies `examples/` and `py/nrlpy/`, sets user **`NRL_ROOT`** and PATH under `%LOCALAPPDATA%\Programs\NRL`. Open a **new** shell after install. Use **`-OptInLMAI`** to record LM/AI opt-in without the prompt.
 
-### Linux / macOS
+### POSIX
 
 ```bash
 cd /path/to/NRL
-NRL_INSTALL_OPT_IN_LM_AI=1 ./scripts/install_nrl.sh
+./scripts/install_nrl.sh
 ```
 
-Installs **`nrl`** and **`nrlpy`** launchers under `~/.local/bin`, updates shell `PATH` when needed, writes `~/.nrl/consent.json`, and exports `NRL_LM_AI_OPT_IN` when opted in. Copies demo assets to **`~/.local/share/nrl`** and appends **`export NRL_ROOT=...`** to `~/.bashrc` or `~/.zshrc`. Reload the shell so **`nrlpy myfile.py`** works.
+Installs `nrl` and `nrlpy` under `~/.local/bin`, copies assets to `~/.local/share/nrl`, appends `NRL_ROOT` to shell rc when needed. Reload the shell.
+
+**Pre-live checklist:** [`docs/PRODUCTION_READINESS.md`](./docs/PRODUCTION_READINESS.md) and `scripts/live_readiness.ps1` / `live_readiness.sh`.
 
 ---
 
-## Runtime commands (selection)
+## Selected CLI commands
 
 | Command | Purpose |
 |---------|---------|
-| `nrl status` / `-status` | Engine version, variant, cognitive lanes, LM/AI opt-in, health. |
-| `nrl inquire <topic>` | Deterministic operator help (`speed`, `epistemic`, `assimilate`, …). |
-| `nrl chat <message>` | Lightweight rule-based intent helper. |
-| `nrl brain-map` | Runtime snapshot: one-shot INT4 bench probe, RSS, `PORT_*` table. |
-| `nrl assimilate [N] [I] [T]` | Sovereign INT4 pass + `checksum_fnv1a64` (binary assimilation contract). |
-| `nrl demo` | Runs `examples/ultimate_power_demo.py` via Python (`PYTHONPATH` set to `nrlpy/src` or install `py/`). |
-| `nrlpy demo` | Same demo from Python entrypoint (`python -m nrlpy.cli demo`); uses `run_path` with injected `nrl` globals. |
-| `nrlpy <file.py>` | TriPy-style: run Python with assimilation globals (same as `nrlpy run <file.py>`). |
+| `nrl status` | Version, active kernel variant, optional LM/AI opt-in flag. |
+| `nrl runtime` | CPU feature bitmask and bound variants. |
+| `nrl bench` / `nrl run` | Benchmark and timed run with profile selection. |
+| `nrl assimilate` | Packed INT4 pass + FNV-1a64 over potentials buffer. |
+| `nrl file <path.nrl>` / `nrl <path.nrl>` | Parse v0 control file and dispatch bench or run. |
+| `nrl brain-map` | Short probe + RSS + `PORT_*` table. |
+| `nrl inquire` / `nrl chat` | Deterministic help and intent stubs (no model dependency). |
+| `nrlpy …` | See [`nrlpy/README.md`](./nrlpy/README.md); `pip install -e ./nrlpy` adds `nrlpy` to PATH on dev machines. |
 
-**If `nrlpy` is not recognized:** you are not on the install PATH yet (new terminal), or you have not run `pip install -e ./nrlpy` from a dev checkout. Install puts `nrlpy.cmd` next to `nrl.exe`; editable install puts `nrlpy.exe` in Python `Scripts`.
-
-Full CLI contract: [`nrl-architecture.md`](./nrl-architecture.md) and `engine/src/main.c`.
-
----
-
-## Current phase
-
-- **Core v1**: implemented — engine, profiles, `.nrl`, `nrlpy`, assimilation path, benchmark harness, release check.
-- **Next (architecture)**: epistemic IR feeding ZPM eligibility; immune runtime gates; optional AArch64 / AVX-512 lanes.
-
-Roadmap and execution log:
-
-- [`nrl-architecture.md`](./nrl-architecture.md)
-- [`CHANGELOG.md`](./CHANGELOG.md)
-
-External review prompt:
-
-- [`grok_review_handoff.md`](./grok_review_handoff.md)
-
----
-
-## Engineering quality gates
-
-- C: `-Wall -Wextra -Wpedantic` via `build.ps1` / `build.sh` (Zig `cc` toolchain on Windows).
-- Python: `ruff` + `mypy --strict` per [`nrlpy/pyproject.toml`](./nrlpy/pyproject.toml).
-- Tests: `engine/tests/test_runtime.c`, `nrlpy/tests/test_smoke.py` (wired into `build.ps1 -Tests`).
-
-Release verification:
-
-- Windows: [`scripts/release_check.ps1`](./scripts/release_check.ps1)
-- POSIX: [`scripts/release_check.sh`](./scripts/release_check.sh)
+Full behavior: [`nrl-architecture.md`](./nrl-architecture.md), `engine/src/main.c`.
 
 ---
 
 ## Repository layout
 
-| Path | Role |
-|------|------|
-| `engine/` | Kernels, dispatch, CLI, C ABI — see [`engine/README.md`](./engine/README.md) |
-| `nrlpy/` | Python package + `_core` extension — see [`nrlpy/README.md`](./nrlpy/README.md) |
-| `language/` | `.nrl` spec and examples — see [`language/README.md`](./language/README.md) |
-| `benchmarks/` | Harnesses and snapshot docs — see [`benchmarks/README.md`](./benchmarks/README.md) |
-| `scripts/` | Install and release automation — see [`scripts/README.md`](./scripts/README.md) |
-| `docs/` | Immune system and long-horizon safety contracts |
-| `examples/` | Cross-surface examples (e.g. assimilation) |
+| Path | Contents |
+|------|----------|
+| `engine/` | Kernels, dispatch, CLI, C ABI — [`engine/README.md`](./engine/README.md) |
+| `nrlpy/` | Python package + `_core` — [`nrlpy/README.md`](./nrlpy/README.md) |
+| `language/` | `.nrl` spec and examples — [`language/README.md`](./language/README.md) |
+| `benchmarks/` | Harnesses — [`benchmarks/README.md`](./benchmarks/README.md) |
+| `scripts/` | Install and release — [`scripts/README.md`](./scripts/README.md) |
+| `docs/` | Long-horizon safety / governance notes |
+| `examples/` | Cross-surface demos |
+| Root | `CHANGELOG.md`, `CONTRIBUTING.md`, `SECURITY.md`, [`grok_review_handoff.md`](./grok_review_handoff.md) (external review brief) |
 
 ---
 
-## Guides
+## Engineering gates
 
-**Humans**
+- **C:** `-Wall -Wextra -Wpedantic` via `build.ps1` / `build.sh` (Zig `cc` on Windows).
+- **Python:** `ruff`, `mypy --strict` per [`nrlpy/pyproject.toml`](./nrlpy/pyproject.toml).
+- **Tests:** `engine/tests/test_runtime.c`, `nrlpy/tests/test_smoke.py` (`build.ps1 -Tests`).
 
-1. Use `sovereign` for official deterministic baselines.
-2. Use `omega-hybrid` when you need strong executed GOPS with partial skip gains.
-3. Use `omega` when studying virtual throughput / time-to-answer (read `virtual_gops` with care).
-4. Never publish numbers without the JSON/MD artifacts from the locked harness.
-5. Treat `nrl-architecture.md` as the contract of record before changing behavior.
+Release checks: [`scripts/release_check.ps1`](./scripts/release_check.ps1), [`scripts/release_check.sh`](./scripts/release_check.sh).
 
-**LLMs**
+---
 
-1. Preserve ABI semantics in `engine/include/nrl/nrl.h`.
-2. Do not break scalar ↔ optimized parity without tests and documented rationale.
-3. Keep `nrl bench` / `nrl assimilate` output stable for parsers.
-4. Keep `.nrl` v0 deterministic (key-value); bump spec for grammar changes.
-5. Prefer measurable edits: benchmark, then document.
+## Maintainer notes
+
+1. Use profile **`sovereign`** for baseline throughput and regression locks.
+2. Use **`omega-hybrid`** when reporting both high `executed_gops` and non-trivial skip statistics.
+3. Treat **`virtual_gops`** on **`omega`** / **`zpm`** as **accounting throughput**, not naive “every op executed at that rate.”
+4. Do not change `nrl bench` / `nrl assimilate` line formats without a versioned parser bump.
+5. ABI changes require a new `nrl_v2_*` prefix policy (see architecture doc).
 
 ---
 
 ## License
 
-This repository uses the **RomanAILabs Business Source License 1.1 (RBSL 1.1)**.
+**RomanAILabs Business Source License 1.1 (RBSL 1.1).** Non-commercial research, education, and evaluation are permitted per [`LICENSE`](./LICENSE). Commercial use requires a separate agreement unless covered by the Additional Use Grant. Versions convert to **Apache 2.0** after the Change Date in the license text.
 
-- Non-commercial research, education, and evaluation are permitted under the license terms.
-- Commercial use requires a separate written commercial license unless covered by the Additional Use Grant in [`LICENSE`](./LICENSE).
-- Each version converts to **Apache License 2.0** after the defined Change Date (see license text).
-
-Commercial and enterprise contact: `daniel@romanailabs.com` | `romanailabs@gmail.com` | `romanailabs.com`
+Enterprise: `daniel@romanailabs.com` · `romanailabs@gmail.com` · `romanailabs.com`
 
 ---
 
-## Honored collaborators
+## Acknowledgments
 
-- Grok / xAI  
-- Gemini-Flash / Google  
-- ChatGPT-5.4 / OpenAI  
-- Cursor  
+Grok/xAI · Gemini-Flash/Google · ChatGPT-5.4/OpenAI · Cursor

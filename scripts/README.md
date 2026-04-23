@@ -8,8 +8,10 @@ Automation entry points for build, install, benchmark-related release checks, an
 |--------|----------|---------|
 | [`install_nrl.ps1`](./install_nrl.ps1) | Windows | Build, install `nrl.exe` to user tree, PATH, consent JSON; `-OptInLMAI` |
 | [`install_nrl.sh`](./install_nrl.sh) | POSIX | Same for `~/.local/bin`; `NRL_INSTALL_OPT_IN_LM_AI=1` |
-| [`release_check.ps1`](./release_check.ps1) | Windows | Build, tests, locked `nrl_vs_cpp` harness, smoke `nrl status` / `inquire` |
-| [`release_check.sh`](./release_check.sh) | POSIX | Equivalent release pipeline |
+| [`release_check.ps1`](./release_check.ps1) | Windows | Build, tests, locked `nrl_vs_cpp` harness, `workload_identity` JSON check, `nrlpy learn`/`chat`/`control status`, smoke `nrl status` / `inquire` / `nrl control` (sandbox) |
+| [`release_check.sh`](./release_check.sh) | POSIX | Equivalent release pipeline + JSON check when Python available |
+| [`live_readiness.ps1`](./live_readiness.ps1) | Windows | `release_check` + optional full `nrlpy` pytest when `_core*.pyd` exists |
+| [`live_readiness.sh`](./live_readiness.sh) | POSIX | Same pattern for `_core*.so` / `.pyd` |
 
 Installers also set **`NRL_ROOT`**, copy `examples/` + `py/nrlpy/`, and add **`nrlpy.cmd`** (Windows) or **`nrlpy`** (POSIX) next to **`nrl`** so **`nrlpy script.py`** works like TriPy after a new shell / PATH reload.
 

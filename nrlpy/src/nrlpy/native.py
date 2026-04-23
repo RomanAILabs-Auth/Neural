@@ -78,6 +78,8 @@ def run_bench(
     threshold: int = 8,
     profile: str = "sovereign",
     nrl_bin: str | None = None,
+    *,
+    respect_control_hints: bool = False,
 ) -> runtime.BenchCliResult:
     """Drive the native ``nrl bench`` harness (profiles: sovereign, omega, …)."""
     return runtime.bench_cli(
@@ -87,6 +89,7 @@ def run_bench(
         threshold=threshold,
         profile=profile,
         nrl_bin=nrl_bin,
+        respect_control_hints=respect_control_hints,
     )
 
 

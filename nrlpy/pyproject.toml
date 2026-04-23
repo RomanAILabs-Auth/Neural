@@ -18,6 +18,9 @@ classifiers = [
     "Operating System :: MacOS",
 ]
 
+[project.optional-dependencies]
+chat = ["psutil>=5.9"]
+
 [project.scripts]
 nrlpy = "nrlpy.cli:main"
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+import time
 from pathlib import Path
 from typing import TypedDict, cast
 
@@ -29,6 +30,16 @@ class BraincoreInt4InplaceResult(TypedDict):
     threshold: int
     seconds: float
     checksum_fnv1a64: int
+
+
+class ControlPreferences(TypedDict, total=False):
+    """Subset of ``build/control/preferences.json`` written by ``nrl control``."""
+
+    schema_id: str
+    updated_unix: int
+    recommended_profile: str
+    power_until_unix: int
+    throttle_hint: str
 
 
 class BenchCliResult(TypedDict):
@@ -209,6 +220,86 @@ def _default_nrl_bin() -> Path:
     return nrl_binary_path()
 
 
+def control_preferences_path() -> Path:
+    """Path to CLI ``preferences.json`` (same layout as native ``nrl control``)."""
+    nrl_root = os.environ.get("NRL_ROOT")
+    if nrl_root:
+        return Path(nrl_root) / "build" / "control" / "preferences.json"
+    return Path.cwd() / "build" / "control" / "preferences.json"
+
+
+def control_audit_log_path() -> Path:
+    """Append-only audit log from ``nrl control`` / ``nrl chat`` (JSON lines)."""
+    return control_preferences_path().parent / "control_audit.jsonl"
+
+
+def _control_hint_bias_applies(prefs: ControlPreferences) -> bool:
+    """True when ``resolve_bench_profile_with_control_hints`` would replace the requested profile."""
+    now = int(time.time())
+    power_until = int(prefs.get("power_until_unix") or 0)
+    if power_until > now:
+        return True
+    th = prefs.get("throttle_hint") or "none"
+    return th in {"conservative", "gated"}
+
+
+def control_hints_active(prefs: ControlPreferences | None = None) -> bool:
+    """Whether sandboxed control preferences currently bias nrlpy bench resolution."""
+    p = prefs if prefs is not None else load_control_preferences()
+    if p is None:
+        return False
+    return _control_hint_bias_applies(p)
+
+
+def load_control_preferences() -> ControlPreferences | None:
+    """Read control preferences if present and schema matches; otherwise ``None``."""
+    path = control_preferences_path()
+    if not path.is_file():
+        return None
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    if not isinstance(raw, dict):
+        return None
+    if raw.get("schema_id") != "nrl.control_preferences.v1":
+        return None
+    out = cast(ControlPreferences, {})
+    if isinstance(raw.get("recommended_profile"), str):
+        out["recommended_profile"] = raw["recommended_profile"]
+    for key in ("updated_unix", "power_until_unix"):
+        v = raw.get(key)
+        if isinstance(v, bool):
+            continue
+        if isinstance(v, int):
+            out[key] = v
+        elif isinstance(v, float):
+            out[key] = int(v)
+        elif isinstance(v, str) and v.isdigit():
+            out[key] = int(v)
+    if isinstance(raw.get("throttle_hint"), str):
+        out["throttle_hint"] = raw["throttle_hint"]
+    out["schema_id"] = "nrl.control_preferences.v1"
+    return out
+
+
+def resolve_bench_profile_with_control_hints(requested_profile: str, prefs: ControlPreferences | None) -> str:
+    """Pick bench profile from ``nrl control`` hints without touching hot-path kernels.
+
+    - Active **power** window (``power_until_unix`` in the future): use ``recommended_profile``.
+    - **throttle_hint** ``conservative`` or ``gated``: use ``recommended_profile`` when set.
+    - Otherwise return ``requested_profile``.
+    """
+    if prefs is None:
+        return requested_profile
+    rec = prefs.get("recommended_profile")
+    if not isinstance(rec, str) or not rec:
+        return requested_profile
+    if not _control_hint_bias_applies(prefs):
+        return requested_profile
+    return rec
+
+
 def bench_cli(
     neurons: int,
     iterations: int,
@@ -216,8 +307,15 @@ def bench_cli(
     threshold: int,
     profile: str,
     nrl_bin: str | None = None,
+    *,
+    respect_control_hints: bool = False,
 ) -> BenchCliResult:
     nrl_path = Path(nrl_bin) if nrl_bin else _default_nrl_bin()
+    eff_profile = (
+        resolve_bench_profile_with_control_hints(profile, load_control_preferences())
+        if respect_control_hints
+        else profile
+    )
     proc = subprocess.run(
         [
             str(nrl_path),
@@ -226,7 +324,7 @@ def bench_cli(
             str(iterations),
             str(reps),
             str(threshold),
-            profile,
+            eff_profile,
         ],
         check=False,
         capture_output=True,

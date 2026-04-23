@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://romanailabs.com/schemas/nrl/learn_config_v1.schema.json",
+  "title": "NRL learn store config v1",
+  "type": "object",
+  "required": ["schema_id", "max_bytes"],
+  "properties": {
+    "schema_id": { "type": "string", "const": "nrl.learn_config.v1" },
+    "max_bytes": {
+      "type": "integer",
+      "minimum": 4096,
+      "description": "On-disk budget for learn store files; default 4 GiB."
+    },
+    "updated_utc": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": false
+}

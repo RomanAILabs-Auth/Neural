@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://romanailabs.com/schemas/nrl/workload_descriptor_v1.schema.json",
+  "title": "NRL workload descriptor v1",
+  "type": "object",
+  "required": [
+    "schema_id",
+    "harness_id",
+    "neurons",
+    "iterations",
+    "reps",
+    "threshold",
+    "profiles"
+  ],
+  "properties": {
+    "schema_id": {
+      "type": "string",
+      "const": "nrl.workload_descriptor.v1"
+    },
+    "harness_id": {
+      "type": "string",
+      "description": "Stable harness identifier (e.g. nrl_vs_cpp)."
+    },
+    "neurons": { "type": "integer", "minimum": 2 },
+    "iterations": { "type": "integer", "minimum": 1 },
+    "reps": { "type": "integer", "minimum": 1 },
+    "threshold": { "type": "integer", "minimum": 1, "maximum": 15 },
+    "profiles": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1
+    },
+    "nrl_version": {
+      "type": "string",
+      "description": "Engine version string when available."
+    },
+    "static_drive_fingerprint": {
+      "type": "string",
+      "description": "Optional hex digest of static drive when workload uses fixed inputs."
+    }
+  },
+  "additionalProperties": false
+}

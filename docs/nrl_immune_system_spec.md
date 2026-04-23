@@ -172,6 +172,7 @@ Metrics MUST be collected in the **control plane** (Python harness, CLI wrapper,
 | Benchmark harness (`nrl_vs_cpp.py`, future gates) | Post-parse validation of JSON; compare to baselines. |
 | Plasticity controller (future) | Sole mutation path; immune hooks on entry/exit of adaptive ticks. |
 | `PORT_*` (documentation) | Maps to `sentinel_metrics`, `govern_policy`, `alive_watchdog` modules in implementation docs only. |
+| Adaptive runtime architecture | [`nrl_alive_language_evolution_architecture.md`](./nrl_alive_language_evolution_architecture.md) — workload identity, specialization store, shadow executor, plasticity; MUST stay consistent with §4.3 and §4.7. Schemas in [`schemas/`](./schemas/). |
 
 ---
 
