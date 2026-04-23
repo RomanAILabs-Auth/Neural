@@ -20,6 +20,7 @@ POSIX: `./build.sh Release 1` then `./scripts/release_check.sh`; optional `./scr
 | Learn store cap | `python -m nrlpy.cli learn status` (default 4 GiB cap) |
 | Chat one-shot | `python -m nrlpy.cli chat --one "status"` |
 | Evidence tail | `python -m nrlpy.cli evidence tail 10` (requires `NRL_EVIDENCE_LOG` or `build/immune/events.jsonl`) |
+| Lightning lattice PoC | `pip install -e nrlpy/[lightning]` then `python -m nrlpy.cli run examples/global_lightning_lattice.py --max-cycles 1` (see script docstring for `NRL_LIGHTNING_HTTP` / `NRL_LIGHTNING_JSONL`) |
 
 ## 3. Configuration
 
@@ -29,6 +30,8 @@ POSIX: `./build.sh Release 1` then `./scripts/release_check.sh`; optional `./scr
 | `NRL_EVIDENCE_LOG` | Immune / audit JSONL path |
 | `NRL_LEARN_DIR` | Bounded vocabulary store root |
 | `NRL_LEARN_DISABLE=1` | Stop chat from ingesting tokens (air-gapped runs) |
+| `NRL_LIGHTNING_HTTP` / `NRL_LIGHTNING_JSONL` | NDJSON strike feed for `examples/global_lightning_lattice.py` when WebSocket is blocked |
+| `NRL_BLITZ_WS_URIS` | Comma-separated `wss://…` override list for the same example |
 
 ## 4. Governance
 

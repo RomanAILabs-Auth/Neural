@@ -23,6 +23,8 @@ Python front-end for the NRL engine: typed wrappers over `libnrl`, a CPython ext
 ```bash
 cd nrlpy
 pip install -e .
+# Optional: Blitzortung WebSocket client for ../examples/global_lightning_lattice.py
+pip install -e ".[lightning]"
 ```
 
 For development without install, set `PYTHONPATH` to `nrlpy/src` as in the root [README](../README.md).

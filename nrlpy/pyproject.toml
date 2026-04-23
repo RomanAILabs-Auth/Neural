@@ -20,6 +20,7 @@ classifiers = [
 
 [project.optional-dependencies]
 chat = ["psutil>=5.9"]
+lightning = ["websockets>=12"]
 
 [project.scripts]
 nrlpy = "nrlpy.cli:main"
