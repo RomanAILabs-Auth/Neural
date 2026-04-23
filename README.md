@@ -201,7 +201,8 @@ Installs `nrl` and `nrlpy` under `~/.local/bin`, copies assets to `~/.local/shar
 
 | Command | Purpose |
 |---------|---------|
-| `nrl status` | Version, active kernel variant, optional LM/AI opt-in flag. |
+| `nrl status` | Version, active kernel variant, LM/AI opt-in (env `NRL_LM_AI_OPT_IN`, else `~/.nrl/consent.json`). |
+| `nrl -ai on` / `off` | Toggle LM/AI consent + Windows `setx` (new shells); `nrlpy -ai on` / `off` same. |
 | `nrl runtime` | CPU feature bitmask and bound variants. |
 | `nrl bench` / `nrl run` | Benchmark and timed run with profile selection. |
 | `nrl assimilate` | Packed INT4 pass + FNV-1a64 over potentials buffer. |

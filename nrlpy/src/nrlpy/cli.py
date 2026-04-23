@@ -37,6 +37,7 @@ Usage:
   nrlpy learn status           Bounded vocab store: disk use vs cap (default 4 GiB)
   nrlpy learn cap BYTES        Set learn-store byte cap (min 1 MiB)
   nrlpy evidence tail [N]     Last N lines of immune JSONL (NRL_EVIDENCE_LOG or build/immune/events.jsonl)
+  nrlpy -ai|--ai on|off       LM/AI opt-in: ~/.nrl/consent.json + setx on Windows
 """
 
 
@@ -45,6 +46,16 @@ def main(argv: Sequence[str] | None = None) -> int:
     if not args or args[0] in {"-h", "--help"}:
         print(USAGE, end="")
         return 0
+    if args and args[0] in ("-ai", "--ai"):
+        from .consent_ai import lm_ai_cli_toggle  # noqa: PLC0415
+
+        if len(args) < 2:
+            print("error: nrlpy -ai on|off\n\n" + USAGE, file=sys.stderr)
+            return 2
+        code = lm_ai_cli_toggle(args[1])
+        if code != 0:
+            print("error: nrlpy -ai expects on|off (or --on|--off|-on|-off)\n\n" + USAGE, file=sys.stderr)
+        return code
     if args[0] == "--version":
         print(runtime.version())
         return 0

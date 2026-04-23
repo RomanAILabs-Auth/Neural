@@ -32,6 +32,7 @@ For development without install, set `PYTHONPATH` to `nrlpy/src` as in the root 
 | Command | Description |
 |---------|-------------|
 | `nrlpy --version` | Engine version string |
+| `nrlpy -ai on` / `off` | LM/AI opt-in: writes `~/.nrl/consent.json` and runs `setx NRL_LM_AI_OPT_IN` on Windows (same contract as `nrl -ai`) |
 | `nrlpy --features` | CPU capability map (JSON) |
 | `nrlpy variant <kernel>` | Active variant name |
 | `nrlpy <file.nrl>` | Run `.nrl` via native `nrl file` |

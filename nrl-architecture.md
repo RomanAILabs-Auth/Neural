@@ -363,7 +363,8 @@ Facts below reference the tree at the time of each milestone; re-run `build.ps1 
 ### M13.13 — Release automation and install
 
 - `scripts/release_check.{ps1,sh}`; `grok_review_handoff.md`.
-- `scripts/install_nrl.{ps1,sh}`; `nrl status` surfaces LM/AI install opt-in flag.
+- `scripts/install_nrl.{ps1,sh}`; `nrl status` surfaces LM/AI opt-in (env `NRL_LM_AI_OPT_IN`, else `~/.nrl/consent.json`).
+- Toggle after install: **`nrl -ai on|off`** (or **`nrlpy -ai on|off`**) — updates consent and, on Windows, **`setx NRL_LM_AI_OPT_IN`** for new shells (`nrl inquire consent`).
 
 ### M13.14 — Synthetic mix benchmark (`aes256-synth`)
 

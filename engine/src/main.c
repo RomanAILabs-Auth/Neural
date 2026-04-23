@@ -124,6 +124,7 @@ static void print_usage(void) {
     puts("      profiles: +aes256-synth (synthetic mix benchmark; see language/examples/aes256.nrl)");
     puts("  nrl demo");
     puts("      run examples/ultimate_power_demo.py (Python + nrlpy on PYTHONPATH)");
+    puts("  nrl -ai|--ai on|off|--on|--off   LM/AI opt-in consent + persist env (Windows: setx)");
 }
 
 static void print_features(void) {
@@ -572,6 +573,116 @@ static void iso8601_utc_now(char *buf, size_t cap) {
 #endif
 }
 
+static int nrl_user_consent_file_path(char *path, size_t cap) {
+#if defined(_WIN32)
+    const char *home = getenv("USERPROFILE");
+#else
+    const char *home = getenv("HOME");
+#endif
+    if (home == NULL || home[0] == '\0') {
+        return -1;
+    }
+    snprintf(path, cap, "%s/.nrl/consent.json", home);
+    return 0;
+}
+
+static int nrl_user_consent_dir_from_path(char *dir, size_t cap, const char *consent_path) {
+    size_t i = strlen(consent_path);
+    while (i > 0 && consent_path[i - 1] != '/' && consent_path[i - 1] != '\\') {
+        --i;
+    }
+    if (i == 0 || i >= cap) {
+        return -1;
+    }
+    memcpy(dir, consent_path, i);
+    dir[i] = '\0';
+    return 0;
+}
+
+static int nrl_read_consent_lm_ai(void) {
+    char path[768];
+    char buf[4096];
+    FILE *fp = NULL;
+    size_t n = 0;
+    if (nrl_user_consent_file_path(path, sizeof path) != 0) {
+        return 0;
+    }
+    fp = fopen(path, "rb");
+    if (fp == NULL) {
+        return 0;
+    }
+    n = fread(buf, 1, sizeof buf - 1u, fp);
+    fclose(fp);
+    buf[n] = '\0';
+    if (strstr(buf, "\"lm_ai_opt_in\": true") != NULL || strstr(buf, "\"lm_ai_opt_in\":true") != NULL) {
+        return 1;
+    }
+    return 0;
+}
+
+static int lm_ai_arg_is_on(const char *sw) {
+    if (sw == NULL) {
+        return 0;
+    }
+    if (strcmp(sw, "--on") == 0 || strcmp(sw, "-on") == 0) {
+        return 1;
+    }
+    return str_ieq(sw, "on");
+}
+
+static int lm_ai_arg_is_off(const char *sw) {
+    if (sw == NULL) {
+        return 0;
+    }
+    if (strcmp(sw, "--off") == 0 || strcmp(sw, "-off") == 0) {
+        return 1;
+    }
+    return str_ieq(sw, "off");
+}
+
+static int cmd_lm_ai_toggle(int enable) {
+    char path[768];
+    char dir[768];
+    char ts[64];
+    FILE *fp = NULL;
+    if (nrl_user_consent_file_path(path, sizeof path) != 0) {
+        fputs("nrl -ai: USERPROFILE/HOME not set; cannot write consent.json\n", stderr);
+        return 1;
+    }
+    if (nrl_user_consent_dir_from_path(dir, sizeof dir, path) != 0) {
+        fputs("nrl -ai: consent path too long\n", stderr);
+        return 1;
+    }
+    if (NRL_MKDIR(dir) != 0 && errno != EEXIST) {
+        fprintf(stderr, "nrl -ai: cannot create directory %s\n", dir);
+        return 1;
+    }
+    iso8601_utc_now(ts, sizeof ts);
+    fp = fopen(path, "wb");
+    if (fp == NULL) {
+        fprintf(stderr, "nrl -ai: cannot open %s for write\n", path);
+        return 1;
+    }
+    fprintf(fp,
+            "{\n  \"lm_ai_opt_in\": %s,\n  \"source\": \"nrl -ai\",\n  \"updated_utc\": \"%s\"\n}\n",
+            enable ? "true" : "false",
+            ts);
+    fclose(fp);
+    printf("nrl -ai: wrote %s (lm_ai_opt_in=%s)\n", path, enable ? "true" : "false");
+#if defined(_WIN32)
+    {
+        char cmd[96];
+        snprintf(cmd, sizeof cmd, "setx NRL_LM_AI_OPT_IN %d >nul 2>&1", enable ? 1 : 0);
+        (void)system(cmd);
+        puts("nrl -ai: NRL_LM_AI_OPT_IN persisted for new terminals (open a new shell)");
+    }
+#else
+    printf("nrl -ai: for this shell: export NRL_LM_AI_OPT_IN=%d\n", enable ? 1 : 0);
+    puts("nrl -ai: add that line to ~/.profile or similar for persistence");
+#endif
+    return 0;
+}
+
 static void json_escape_short(const char *in, char *out, size_t cap) {
     size_t j = 0;
     if (cap == 0) {
@@ -977,13 +1088,23 @@ static int cmd_status(void) {
     const uint32_t f = nrl_v1_cpu_features();
     const int has_avx2 = (f & NRL_CPU_AVX2) != 0u;
     const char *opt = getenv("NRL_LM_AI_OPT_IN");
-    const int lm_opt_in = (opt != NULL && strcmp(opt, "1") == 0);
+    int lm_opt_in = 0;
+    const char *lm_note = "";
+    if (opt != NULL) {
+        lm_opt_in = (strcmp(opt, "1") == 0);
+    } else {
+        const int c = nrl_read_consent_lm_ai();
+        lm_opt_in = c;
+        if (c != 0) {
+            lm_note = " (from ~/.nrl/consent.json)";
+        }
+    }
     puts("NRL status");
     printf("  engine: %s\n", nrl_v1_version());
     printf("  primary_variant: %s\n", nrl_v1_active_variant("braincore_int4"));
     printf("  cognitive_system1: enabled (zpm/automatic/omega lanes)\n");
     printf("  cognitive_system2: enabled (sovereign iterative lane)\n");
-    printf("  lm_ai_opt_in: %s\n", lm_opt_in ? "enabled" : "disabled");
+    printf("  lm_ai_opt_in: %s%s\n", lm_opt_in ? "enabled" : "disabled", lm_note);
     printf("  avx2_ready: %s\n", has_avx2 ? "yes" : "no");
     printf("  health: %s\n", has_avx2 ? "nominal" : "degraded (scalar fallback)");
     nrl_status_print_control_prefs();
@@ -992,7 +1113,15 @@ static int cmd_status(void) {
 
 static int cmd_inquire(const char *topic) {
     if (topic == NULL || *topic == '\0') {
-        puts("nrl inquire topics: speed, safety, modes, profiles, architecture, benchmark, assimilate, epistemic, demo, control");
+        puts("nrl inquire topics: speed, safety, modes, profiles, architecture, benchmark, assimilate, epistemic, demo, control, consent");
+        return 0;
+    }
+    if (str_ieq(topic, "consent")) {
+        puts("inquire:consent");
+        puts("  command: nrl -ai|--ai on|off|--on|--off");
+        puts("  writes: ~/.nrl/consent.json (USERPROFILE/.nrl on Windows)");
+        puts("  windows: also runs setx NRL_LM_AI_OPT_IN 1|0 for new terminals");
+        puts("  nrlpy: nrlpy -ai|--ai on|off (same file + setx on Windows)");
         return 0;
     }
     if (str_ieq(topic, "control")) {
@@ -1055,7 +1184,7 @@ static int cmd_inquire(const char *topic) {
         return 0;
     }
     puts("inquire:unknown-topic");
-    puts("  try one of: speed, safety, modes, profiles, architecture, benchmark, assimilate, epistemic, demo, control");
+    puts("  try one of: speed, safety, modes, profiles, architecture, benchmark, assimilate, epistemic, demo, control, consent");
     return 0;
 }
 
@@ -1976,6 +2105,17 @@ int main(int argc, char **argv) {
     if (strcmp(argv[1], "--features") == 0) {
         print_features();
         return 0;
+    }
+
+    if (argc >= 3 && (strcmp(argv[1], "-ai") == 0 || strcmp(argv[1], "--ai") == 0)) {
+        if (lm_ai_arg_is_on(argv[2])) {
+            return cmd_lm_ai_toggle(1);
+        }
+        if (lm_ai_arg_is_off(argv[2])) {
+            return cmd_lm_ai_toggle(0);
+        }
+        fputs("nrl -ai: expected on|off (or --on|--off|-on|-off)\n", stderr);
+        return 2;
     }
 
     if (strcmp(argv[1], "runtime") == 0) {
