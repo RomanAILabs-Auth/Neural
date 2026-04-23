@@ -142,6 +142,7 @@ python -m nrlpy.cli --version
 python -m nrlpy.cli bench 1048576 16384 4 8 omega-hybrid
 python -m nrlpy.cli run examples\assimilate_llm_solver.py
 python -m nrlpy.cli run examples\ultimate_power_demo.py
+python -m nrlpy.cli run examples\global_lightning_lattice.py --max-cycles 1
 python -m nrlpy.cli demo
 ```
 
@@ -162,6 +163,7 @@ python3 -m nrlpy.cli --version
 python3 -m nrlpy.cli bench 1048576 16384 4 8 omega-hybrid
 python3 -m nrlpy.cli run examples/assimilate_llm_solver.py
 python3 -m nrlpy.cli run examples/ultimate_power_demo.py
+python3 -m nrlpy.cli run examples/global_lightning_lattice.py --max-cycles 1
 python3 -m nrlpy.cli demo
 ```
 
