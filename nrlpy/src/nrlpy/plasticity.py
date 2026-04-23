@@ -2,6 +2,12 @@
 
 Sovereign mode: all mutation APIs are logically disabled per immune spec §4.3.
 Adaptive mode (future): logging-only stub — no data-plane persistence yet.
+
+**Roadmap (where "real ML" is allowed to land in this repo):** control-plane only —
+``workload_id`` / ``structural_hash``, shadow executor vs reference, append-only evidence,
+specialization store promotion — see ``docs/nrl_alive_language_evolution_architecture.md``
+(contracts NAL-001 / NAL-002: no adaptation inside INT4 inner loops unless a future
+signed coprocessor contract says otherwise).
 """
 
 from __future__ import annotations

@@ -9,13 +9,13 @@
 
 ## 1. Scope
 
-This document specifies how NRL may **accumulate verified performance artifacts** and **bounded data-plane adaptations** without:
+This document specifies how NRL may **accumulate verified performance artifacts** and **bounded data-plane adaptations** as part of a **frontier AI/LM orchestration story**—language surfaces, assimilated tooling, optional models, and specialization—**without**:
 
 - modifying shipped executable code in production,
 - moving policy or ML inference into INT4 inner loops,
 - or implying non-measurable “intelligence” or agency.
 
-Execution remains **`nrl` / `libnrl`**; orchestration and evidence remain **Python (`nrlpy`) and harnesses**.
+Execution remains **`nrl` / `libnrl`**; orchestration, **LM-adjacent** workflows, and evidence remain **Python (`nrlpy`) and harnesses**. *Denying* that NRL/Nrlpy is an AI/LM system at the product level is misleading; **denying silent in-loop ML** is the precise contract (see NAL-002).
 
 ---
 
@@ -160,4 +160,4 @@ The production architecture is **strict at the kernel**, **adaptive only in the 
 
 ## 10. Operator control plane (CLI, separate from lattice evolution)
 
-Natural-language **operator bias** (`nrl chat`, `nrl control`) is intentionally **not** part of the alive-language / plasticity spec above: it writes only sandboxed JSON under `build/control` and never reaches the INT4 hot loop. See [`nrl-architecture.md`](../nrl-architecture.md) §1.5. Nrlpy may optionally apply those hints when shelling out to `nrl bench` (`respect_control_hints`). A future immune bridge could reconcile operator hints with plasticity policy; until then, treat them as **orthogonal control channels**.
+Natural-language **operator bias** (`nrl chat`, `nrl control`) is an **LM-facing product surface** that is intentionally **orthogonal to lattice plasticity** in this spec: it writes only sandboxed JSON under `build/control` and never reaches the INT4 hot loop. See [`nrl-architecture.md`](../nrl-architecture.md) §0.1 and §1.5. Nrlpy may optionally apply those hints when shelling out to `nrl bench` (`respect_control_hints`). A future immune bridge could reconcile operator hints with plasticity policy; until then, treat CLI control and data-plane adaptation as **separate channels** under the same architecture.

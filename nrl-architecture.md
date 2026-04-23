@@ -15,6 +15,12 @@ Contact: `daniel@romanailabs.com`, `romanailabs@gmail.com` · `romanailabs.com`
 4. **Reproducibility:** official throughput claims require locked `(neurons, iterations, reps, threshold, profile)`, stated warmup policy, and machine-readable artifacts.
 5. **Honest accounting:** `virtual_gops` and `skip_ratio` encode **baseline-equivalent work per wall second** and **fraction of baseline updates not executed** on instrumented paths—not a claim that every skipped operation was executed at that rate.
 
+### 0.1 Frontier AI / LM positioning (inside this contract)
+
+NRL and Nrlpy are intentionally a **frontier AI/LM-oriented stack**: natural-language control (`nrl chat`, `nrl control`), assimilated script surfaces (`nrlpy run`, `llm_globals()`), explicit **LM/AI opt-in** (`nrl -ai`, installer consent), and a **roadmapped** bounded adaptation plane (specialization cache, shadow promotion, plasticity — see [`docs/nrl_alive_language_evolution_architecture.md`](./docs/nrl_alive_language_evolution_architecture.md)). That is **not** in tension with principles §0.1–0.5: **lattice semantics stay deterministic and replay-locked**, while **language, policy, evidence, and optional upstream models** live in the orchestration layer.
+
+External narratives that dismiss the whole system as “not AI” because the INT4 inner loop has no transformer are **misaligned with this product**: the correct statement is **NAL-002** — no **uncontracted** ML inference *inside* the neuron hot path by default; control-plane and operator-consented LM surfaces are **first-class**.
+
 ---
 
 ## 1. Components
@@ -58,7 +64,7 @@ Runtime hardening (sentinel / governor / watchdog) is specified under [`docs/nrl
 
 ### 1.5 Sandboxed CLI control layer (`nrl chat`, `nrl control`)
 
-High-level natural-language strings are accepted only as **hints** mapped to a small closed set of intents. There is **no LLM on the hot path**; classification is deterministic substring rules in the CLI (`engine/src/main.c`), outside lattice kernels.
+High-level natural-language strings are accepted only as **hints** mapped to a small closed set of intents. This layer **is** an LM-facing operator surface; there is **no LLM inside the INT4 hot path** — classification here is deterministic substring rules in the CLI (`engine/src/main.c`), outside lattice kernels, with full audit JSONL (§1.5 rules).
 
 **Sandbox rules (normative for this layer):**
 
@@ -358,7 +364,7 @@ Facts below reference the tree at the time of each milestone; re-run `build.ps1 
 
 ### M13.12 — Operator CLI
 
-- `nrl status`, `nrl inquire`, `nrl chat` — deterministic strings; no LLM dependency in core.
+- `nrl status`, `nrl inquire`, `nrl chat` — operator-facing strings; **no LLM inside lattice kernels**; upstream LMs may sit above Nrlpy/scripts per consent and product policy.
 
 ### M13.13 — Release automation and install
 
