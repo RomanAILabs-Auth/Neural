@@ -77,7 +77,7 @@ Four layers; responsibilities do not merge.
 
 ### 4.3 `plasticity_controller`
 
-Sovereign: read-only / `disabled`. Adaptive: bounded writes with per-tick budget and magnitude caps; each mutation emits **JSON evidence** (`immune_event_v1` family; see schemas).
+Sovereign: read-only / `disabled`. Adaptive: bounded writes with per-tick budget and magnitude caps; each mutation emits **JSON evidence** (`immune_event_v1` family; see schemas). **Nrlpy stub today:** `plasticity_snapshot("adaptive")` with `NRL_PLASTICITY_SHADOW_LOG=1` appends a `log_only` immune line (no lattice writes) to exercise the evidence path.
 
 ### 4.4 `shadow_executor`
 

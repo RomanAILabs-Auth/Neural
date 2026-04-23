@@ -21,6 +21,14 @@ NRL and Nrlpy are intentionally a **frontier AI/LM-oriented stack**: natural-lan
 
 External narratives that dismiss the whole system as “not AI” because the INT4 inner loop has no transformer are **misaligned with this product**: the correct statement is **NAL-002** — no **uncontracted** ML inference *inside* the neuron hot path by default; control-plane and operator-consented LM surfaces are **first-class**.
 
+### 0.2 External automation prompts (LLM / Grok-style refactors)
+
+Third-party prompts that demand **global double-buffering**, **“no in-place mutation ever”** or **graph-style WAR fixes** must be **checked against this repository** before execution:
+
+- The shipped **packed INT4** update (`braincore_int4_*`) applies **independent per-cell** dynamics each sub-step: each packed byte reads **only** its own prior potential and the **fixed** input drive for that index. There is **no neighbor coupling** in that reference model, so **intra-iteration scan order does not change semantics** (still test-locked for regression).
+- **Omega / ZPM** add **declared** skipping and accounting; determinism is by **locked seeds, buffers, and workload descriptors** — not by banning all in-place writes in production kernels.
+- A **double-buffer formalism** is a **valid correctness reference** (see `engine/tests/test_runtime.c`) and may guide future research paths; wholesale hot-path refactors require **ABI, perf, and parity review** — not “output only code” blind drops.
+
 ---
 
 ## 1. Components

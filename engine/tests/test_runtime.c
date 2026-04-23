@@ -48,6 +48,64 @@ extern nrl_v1_status nrl_braincore_int4_omega_virtual(
     uint32_t active_kernel_mode,
     nrl_omega_stats *stats_out);
 
+/* One logical timestep: read-only src potentials -> write-only dst (double-buffer step). */
+static void braincore_int4_step_doublebuf(const uint8_t *src,
+                                         uint8_t *dst,
+                                         const uint8_t *packed_inputs,
+                                         size_t byte_count,
+                                         uint8_t threshold) {
+    for (size_t i = 0; i < byte_count; ++i) {
+        const uint8_t p = src[i];
+        const uint8_t in = packed_inputs[i];
+        uint8_t lo = (uint8_t)((p & 0x0fu) + (in & 0x0fu));
+        uint8_t hi = (uint8_t)(((p >> 4) & 0x0fu) + ((in >> 4) & 0x0fu));
+        if (lo > 15u) {
+            lo = 15u;
+        }
+        if (hi > 15u) {
+            hi = 15u;
+        }
+        if (lo >= threshold) {
+            lo = 0u;
+        }
+        if (hi >= threshold) {
+            hi = 0u;
+        }
+        dst[i] = (uint8_t)(lo | (uint8_t)(hi << 4));
+    }
+}
+
+/* Same as braincore_int4_step_doublebuf but reverse index order (must match for independence). */
+static void braincore_int4_step_doublebuf_reverse(const uint8_t *src,
+                                                  uint8_t *dst,
+                                                  const uint8_t *packed_inputs,
+                                                  size_t byte_count,
+                                                  uint8_t threshold) {
+    if (byte_count == 0) {
+        return;
+    }
+    for (size_t k = 0; k < byte_count; ++k) {
+        const size_t i = byte_count - 1u - k;
+        const uint8_t p = src[i];
+        const uint8_t in = packed_inputs[i];
+        uint8_t lo = (uint8_t)((p & 0x0fu) + (in & 0x0fu));
+        uint8_t hi = (uint8_t)(((p >> 4) & 0x0fu) + ((in >> 4) & 0x0fu));
+        if (lo > 15u) {
+            lo = 15u;
+        }
+        if (hi > 15u) {
+            hi = 15u;
+        }
+        if (lo >= threshold) {
+            lo = 0u;
+        }
+        if (hi >= threshold) {
+            hi = 0u;
+        }
+        dst[i] = (uint8_t)(lo | (uint8_t)(hi << 4));
+    }
+}
+
 static void braincore_int4_reference(uint8_t *packed_potentials,
                                      const uint8_t *packed_inputs,
                                      size_t neuron_count,
@@ -112,6 +170,53 @@ static int test_braincore_int4_matches_reference(void) {
         return 2;
     }
     return 0;
+}
+
+static int test_braincore_double_buffer_matches_inplace(void) {
+    enum { NEURONS = 96, BYTES = NEURONS / 2, ITERS = 11 };
+    uint8_t in[BYTES];
+    uint8_t gold[BYTES];
+    uint8_t buf0[BYTES];
+    uint8_t buf1[BYTES];
+    uint8_t *cur = buf0;
+    uint8_t *nxt = buf1;
+
+    for (size_t i = 0; i < BYTES; ++i) {
+        in[i] = (uint8_t)((i * 3u) & 0x77u);
+        gold[i] = (uint8_t)(0x0fu ^ (uint8_t)i);
+        buf0[i] = gold[i];
+    }
+    memcpy(buf1, buf0, BYTES);
+
+    braincore_int4_reference(gold, in, NEURONS, ITERS, 9);
+
+    cur = buf0;
+    nxt = buf1;
+    for (size_t it = 0; it < ITERS; ++it) {
+        braincore_int4_step_doublebuf((const uint8_t *)cur, nxt, in, BYTES, 9);
+        {
+            uint8_t *tmp = cur;
+            cur = nxt;
+            nxt = tmp;
+        }
+    }
+    /* After ITERS ping-pong steps, latest potentials sit in ``cur``. */
+    return memcmp(gold, cur, BYTES) == 0 ? 0 : 1;
+}
+
+static int test_braincore_intra_step_scan_order_independent(void) {
+    enum { BYTES = 73 };
+    uint8_t src[BYTES];
+    uint8_t d1[BYTES];
+    uint8_t d2[BYTES];
+    uint8_t in[BYTES];
+    for (size_t i = 0; i < BYTES; ++i) {
+        src[i] = (uint8_t)(i * 11u + 3u);
+        in[i] = (uint8_t)((i * 5u) & 0x7fu);
+    }
+    braincore_int4_step_doublebuf(src, d1, in, BYTES, 7);
+    braincore_int4_step_doublebuf_reverse(src, d2, in, BYTES, 7);
+    return memcmp(d1, d2, BYTES) == 0 ? 0 : 1;
 }
 
 static int test_braincore_int4_deterministic(void) {
@@ -297,6 +402,18 @@ int main(void) {
     rc = test_braincore_int4_deterministic();
     if (rc != 0) {
         fprintf(stderr, "test_braincore_int4_deterministic failed: %d\n", rc);
+        return rc;
+    }
+
+    rc = test_braincore_double_buffer_matches_inplace();
+    if (rc != 0) {
+        fprintf(stderr, "test_braincore_double_buffer_matches_inplace failed: %d\n", rc);
+        return rc;
+    }
+
+    rc = test_braincore_intra_step_scan_order_independent();
+    if (rc != 0) {
+        fprintf(stderr, "test_braincore_intra_step_scan_order_independent failed: %d\n", rc);
         return rc;
     }
 
