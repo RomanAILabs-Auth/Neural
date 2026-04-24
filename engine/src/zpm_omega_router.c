@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
 /*
  * zpm_omega_router.c - fractal routed virtual compute lane.
  * Copyright RomanAILabs - Daniel Harding (GitHub RomanAILabs-Auth)

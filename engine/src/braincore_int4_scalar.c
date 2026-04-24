@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
 /*
  * braincore_int4_scalar.c - scalar reference kernel for packed INT4 braincore.
  * Copyright RomanAILabs - Daniel Harding (GitHub RomanAILabs-Auth)

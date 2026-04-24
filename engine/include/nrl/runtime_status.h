@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
 /*
  * runtime_status.h - process memory and lightweight runtime introspection.
  * Copyright RomanAILabs - Daniel Harding (GitHub RomanAILabs-Auth)

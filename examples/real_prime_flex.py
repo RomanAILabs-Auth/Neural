@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
 ﻿# real_prime_flex.py
 # Copyright RomanAILabs - Daniel Harding
 #

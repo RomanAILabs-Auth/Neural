@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
 /*
  * main.c - NRL native CLI skeleton.
  * Copyright RomanAILabs - Daniel Harding (GitHub RomanAILabs-Auth)
@@ -33,6 +34,12 @@
 #include "runtime_internal.h"
 
 static int cmd_brain_map(void);
+
+/* Forward declarations for helpers used before their definitions below. */
+static int path_is_dir(const char *p);
+static int get_self_exe_path(char *out, size_t cap);
+static int get_exe_dir(char *out, size_t cap);
+static int has_suffix(const char *s, const char *suffix);
 
 static double now_seconds(void) {
 #if defined(_WIN32)
@@ -118,6 +125,9 @@ static void print_usage(void) {
     puts("  nrl file <path.nrl>");
     puts("  nrl run [neurons] [iters] [threshold] [profile]");
     puts("      profiles: sovereign|adaptive|war-drive|zpm|automatic|omega|omega-hybrid");
+    puts("  nrl run <model.gguf> | nrl <model.gguf>");
+    puts("      GGUF inference (P1) lives in the Python orchestrator;");
+    puts("      use: python -m nrlpy run <model.gguf>   (see docs/nrl_gguf_runner_architecture.md)");
     puts("  nrl assimilate [neurons] [iters] [threshold]");
     puts("      raw INT4 lattice assimilation (binary tensor contract + checksum)");
     puts("  nrl bench [neurons] [iters] [reps] [threshold] [profile]");
@@ -171,6 +181,267 @@ static int has_suffix(const char *s, const char *suffix) {
         return 0;
     }
     return strcmp(s + (n - m), suffix) == 0;
+}
+
+/*
+ * Argv-splitting aware .gguf detector.
+ *
+ * PowerShell (and other shells) tokenise unquoted paths on whitespace, so
+ *   nrl run C:\Program Files\X\model.gguf
+ * arrives as argv = [... "C:\\Program", "Files\\X\\model.gguf"]. Scan from
+ * ``start`` for the first argv slot whose value ends in ".gguf"; callers
+ * then join argv[start..last_gguf] with a single space to reconstruct the
+ * model path, leaving argv[last_gguf+1..] as flags to forward verbatim.
+ *
+ * Returns the index of the .gguf-suffixed slot, or -1 if no slot qualifies.
+ */
+static int detect_gguf_slot(int argc, char **argv, int start) {
+    for (int i = start; i < argc; ++i) {
+        if (has_suffix(argv[i], ".gguf")) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+static int join_argv_with_spaces(char **argv, int first, int last_inclusive,
+                                 char *out, size_t cap) {
+    size_t off = 0;
+    for (int i = first; i <= last_inclusive; ++i) {
+        const size_t need = strlen(argv[i]) + ((i == first) ? 0 : 1);
+        if (off + need + 1 >= cap) {
+            return -1;
+        }
+        if (i != first) {
+            out[off++] = ' ';
+        }
+        memcpy(out + off, argv[i], strlen(argv[i]));
+        off += strlen(argv[i]);
+    }
+    out[off] = '\0';
+    return 0;
+}
+
+/*
+ * Locate the ``py/nrlpy`` tree to export as PYTHONPATH when spawning the
+ * Python orchestrator. Prefers (in order): ``$NRL_ROOT/py``, ``<exe_dir>/../py``
+ * (installed layout), ``<cwd>/nrlpy/src`` (developer repo). Returns 0 on
+ * success with ``out`` pointing at the directory to add to PYTHONPATH.
+ */
+static int resolve_pythonpath_for_gguf(char *out, size_t cap) {
+    char probe[4096];
+
+    const char *nrl_root = getenv("NRL_ROOT");
+    if (nrl_root != NULL && *nrl_root != '\0') {
+        snprintf(probe, sizeof(probe), "%s/py/nrlpy", nrl_root);
+        if (path_is_dir(probe)) {
+            snprintf(out, cap, "%s/py", nrl_root);
+            return 0;
+        }
+        snprintf(probe, sizeof(probe), "%s/nrlpy/src/nrlpy", nrl_root);
+        if (path_is_dir(probe)) {
+            snprintf(out, cap, "%s/nrlpy/src", nrl_root);
+            return 0;
+        }
+    }
+
+    char exedir[4096];
+    if (get_exe_dir(exedir, sizeof(exedir)) == 0) {
+        snprintf(probe, sizeof(probe), "%s/../py/nrlpy", exedir);
+        if (path_is_dir(probe)) {
+            snprintf(out, cap, "%s/../py", exedir);
+            return 0;
+        }
+        snprintf(probe, sizeof(probe), "%s/../../py/nrlpy", exedir);
+        if (path_is_dir(probe)) {
+            snprintf(out, cap, "%s/../../py", exedir);
+            return 0;
+        }
+        snprintf(probe, sizeof(probe), "%s/../nrlpy/src/nrlpy", exedir);
+        if (path_is_dir(probe)) {
+            snprintf(out, cap, "%s/../nrlpy/src", exedir);
+            return 0;
+        }
+        snprintf(probe, sizeof(probe), "%s/../../nrlpy/src/nrlpy", exedir);
+        if (path_is_dir(probe)) {
+            snprintf(out, cap, "%s/../../nrlpy/src", exedir);
+            return 0;
+        }
+    }
+
+#if defined(_WIN32)
+    {
+        char cwd[4096];
+        if (GetCurrentDirectoryA(sizeof(cwd), cwd) != 0) {
+            snprintf(probe, sizeof(probe), "%s\\nrlpy\\src\\nrlpy", cwd);
+            if (path_is_dir(probe)) {
+                snprintf(out, cap, "%s\\nrlpy\\src", cwd);
+                return 0;
+            }
+        }
+    }
+#else
+    {
+        char cwd[4096];
+        if (getcwd(cwd, sizeof(cwd)) != NULL) {
+            snprintf(probe, sizeof(probe), "%s/nrlpy/src/nrlpy", cwd);
+            if (path_is_dir(probe)) {
+                snprintf(out, cap, "%s/nrlpy/src", cwd);
+                return 0;
+            }
+        }
+    }
+#endif
+    return -1;
+}
+
+/*
+ * Actually run the GGUF model by delegating to the Python orchestrator.
+ * The native runner does not link libllama yet (P4 roadmap); until it does,
+ * the native binary spawns ``python -m nrlpy <surface> <model> <rest...>``
+ * with PYTHONPATH set to the installed ``py/`` folder. If Python is absent
+ * we print a honest fallback message and exit with code 3 (distinct from 2
+ * so scripts can tell "no-python" apart from "usage error").
+ */
+static int spawn_python_gguf(const char *surface, const char *model_path,
+                             int rest_argc, char **rest_argv) {
+    char py_path[4096];
+    if (resolve_pythonpath_for_gguf(py_path, sizeof(py_path)) != 0) {
+        fprintf(stderr,
+                "nrl %s: could not locate the nrlpy package (expected <install>/py/nrlpy or\n"
+                "  <repo>/nrlpy/src/nrlpy). Set NRL_ROOT to your repo or install root and retry.\n",
+                surface);
+        return 3;
+    }
+
+#if defined(_WIN32)
+    if (_putenv_s("PYTHONPATH", py_path) != 0) {
+        fprintf(stderr, "nrl %s: could not set PYTHONPATH\n", surface);
+        return 3;
+    }
+    if (getenv("NRL_DEBUG_GGUF_SPAWN") != NULL) {
+        fprintf(stderr, "[nrl-debug] PYTHONPATH=%s\n", py_path);
+        fprintf(stderr, "[nrl-debug] model=%s\n", model_path);
+        fprintf(stderr, "[nrl-debug] surface=%s rest_argc=%d\n", surface, rest_argc);
+    }
+    {
+        char self_exe[4096];
+        if (get_self_exe_path(self_exe, sizeof(self_exe)) == 0) {
+            (void)_putenv_s("NRL_BIN", self_exe);
+        }
+    }
+
+    const int fixed = 5;  /* python -m nrlpy <surface> <model> */
+    const int total = fixed + rest_argc + 1;
+    const char **argv = (const char **)calloc((size_t)total, sizeof(char *));
+    if (argv == NULL) {
+        fputs("nrl: oom building python argv\n", stderr);
+        return 3;
+    }
+    argv[0] = "python";
+    argv[1] = "-m";
+    argv[2] = "nrlpy";
+    argv[3] = surface;
+    argv[4] = model_path;
+    for (int i = 0; i < rest_argc; ++i) {
+        argv[fixed + i] = rest_argv[i];
+    }
+    argv[total - 1] = NULL;
+
+    const intptr_t rc = _spawnvp(_P_WAIT, "python", argv);
+    if (rc != (intptr_t)-1) {
+        free((void *)argv);
+        return (int)rc;
+    }
+
+    argv[0] = "py";
+    /* `py -3 -m nrlpy ...` — shift insert of `-3`. Rebuild. */
+    {
+        const int fixed2 = 6;
+        const int total2 = fixed2 + rest_argc + 1;
+        const char **argv2 = (const char **)calloc((size_t)total2, sizeof(char *));
+        if (argv2 == NULL) {
+            free((void *)argv);
+            fputs("nrl: oom building py argv\n", stderr);
+            return 3;
+        }
+        argv2[0] = "py";
+        argv2[1] = "-3";
+        argv2[2] = "-m";
+        argv2[3] = "nrlpy";
+        argv2[4] = surface;
+        argv2[5] = model_path;
+        for (int i = 0; i < rest_argc; ++i) {
+            argv2[fixed2 + i] = rest_argv[i];
+        }
+        argv2[total2 - 1] = NULL;
+
+        const intptr_t rc2 = _spawnvp(_P_WAIT, "py", argv2);
+        free((void *)argv);
+        if (rc2 != (intptr_t)-1) {
+            free((void *)argv2);
+            return (int)rc2;
+        }
+        free((void *)argv2);
+    }
+    fprintf(stderr,
+            "nrl %s: failed to spawn python (tried `python` and `py -3`).\n"
+            "  Install Python 3.10+ and ensure it is on PATH, then retry.\n",
+            surface);
+    return 3;
+#else
+    if (setenv("PYTHONPATH", py_path, 1) != 0) {
+        fprintf(stderr, "nrl %s: setenv PYTHONPATH failed\n", surface);
+        return 3;
+    }
+    {
+        char self_exe[4096];
+        if (get_self_exe_path(self_exe, sizeof(self_exe)) == 0) {
+            (void)setenv("NRL_BIN", self_exe, 1);
+        }
+    }
+    const int fixed = 5;
+    const int total = fixed + rest_argc + 1;
+    char **argv = (char **)calloc((size_t)total, sizeof(char *));
+    if (argv == NULL) {
+        fputs("nrl: oom building python argv\n", stderr);
+        return 3;
+    }
+    argv[0] = (char *)"python3";
+    argv[1] = (char *)"-m";
+    argv[2] = (char *)"nrlpy";
+    argv[3] = (char *)surface;
+    argv[4] = (char *)model_path;
+    for (int i = 0; i < rest_argc; ++i) {
+        argv[fixed + i] = rest_argv[i];
+    }
+    argv[total - 1] = NULL;
+    execvp("python3", argv);
+    argv[0] = (char *)"python";
+    execvp("python", argv);
+    free(argv);
+    fprintf(stderr, "nrl %s: failed to exec python3/python\n", surface);
+    return 3;
+#endif
+}
+
+/*
+ * Entry: dispatch a detected .gguf argv span to the Python orchestrator.
+ * Joins argv[start..slot] with single spaces (Windows path-with-spaces
+ * tolerant) and forwards argv[slot+1..] as-is.
+ */
+static int dispatch_gguf(const char *surface, int argc, char **argv,
+                         int path_first, int path_slot) {
+    char model_buf[8192];
+    if (join_argv_with_spaces(argv, path_first, path_slot,
+                              model_buf, sizeof(model_buf)) != 0) {
+        fprintf(stderr, "nrl %s: model path too long\n", surface);
+        return 2;
+    }
+    const int rest_first = path_slot + 1;
+    const int rest_argc = (argc > rest_first) ? (argc - rest_first) : 0;
+    char **rest_argv = (rest_argc > 0) ? &argv[rest_first] : NULL;
+    return spawn_python_gguf(surface, model_buf, rest_argc, rest_argv);
 }
 
 static int path_is_file(const char *p) {
@@ -1595,6 +1866,19 @@ static int cmd_assimilate(int argc, char **argv) {
 }
 
 static int cmd_run(int argc, char **argv) {
+    /*
+     * If any argv past "run" ends in .gguf, delegate to the Python GGUF
+     * runner (nrlpy.gguf via `python -m nrlpy run`). Handles space-split
+     * paths (e.g. Windows `C:\RomaPy Engine\model.gguf` tokenised into
+     * two argv slots).
+     */
+    if (argc >= 3) {
+        const int slot = detect_gguf_slot(argc, argv, 2);
+        if (slot >= 0) {
+            return dispatch_gguf("run", argc, argv, 2, slot);
+        }
+    }
+
     const char *profile_name = argc >= 6 ? argv[5] : "sovereign";
     if (str_ieq(profile_name, "aes256") || str_ieq(profile_name, "aes256-synth")) {
         fputs("nrl run: aes256-synth is bench-only; use: nrl bench <N> <I> <R> <T> aes256-synth\n",
@@ -2131,6 +2415,18 @@ int main(int argc, char **argv) {
     }
 
     if (strcmp(argv[1], "chat") == 0 || strcmp(argv[1], "-chat") == 0) {
+        /*
+         * `nrl chat <model.gguf> [flags...]` — delegate to the Python REPL
+         * (nrlpy.gguf_chat). Same argv-scan rules as `run` for paths with
+         * spaces. A bare `nrl chat` (no .gguf in argv) keeps the legacy
+         * rule-based control-plane chat behavior.
+         */
+        if (argc >= 3) {
+            const int slot = detect_gguf_slot(argc, argv, 2);
+            if (slot >= 0) {
+                return dispatch_gguf("chat", argc, argv, 2, slot);
+            }
+        }
         return cmd_chat(argc, argv);
     }
 
@@ -2169,6 +2465,18 @@ int main(int argc, char **argv) {
 
     if (has_suffix(argv[1], ".nrl")) {
         return cmd_file(argv[1]);
+    }
+
+    /*
+     * Bare `nrl <model.gguf>` (possibly with space-split argv) — delegate to
+     * the Python runner in `run` surface. Scan from argv[1] so the path can
+     * itself start in argv[1].
+     */
+    {
+        const int slot = detect_gguf_slot(argc, argv, 1);
+        if (slot >= 0) {
+            return dispatch_gguf("run", argc, argv, 1, slot);
+        }
     }
 
     print_usage();

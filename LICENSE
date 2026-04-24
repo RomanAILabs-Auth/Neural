@@ -1,66 +1,236 @@
-# RomanAILabs Business Source License 1.1 (RBSL 1.1)
-# Software: NRL Engine and NrlPy Driver
-# Copyright (c) 2026 RomanAILabs - Daniel Harding. All Rights Reserved.
+Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
 
-### 1. Definitions
+# RomanAILabs Proprietary Source-Available Evaluation License 1.0
+
+Software: NRL Engine, NrlPy Driver, Bio-Digital Brain documentation, examples,
+scripts, tests, model-object formats, architecture materials, and associated
+materials.
+
+Copyright (c) 2026 RomanAILabs - Daniel Harding.
+All Rights Reserved. Full intellectual property rights are retained by
+Daniel Harding / RomanAILabs.
+
+This software is proprietary source-available software. It is NOT open source,
+NOT free software, and NOT released under a permissive license. Any use,
+copying, modification, distribution, implementation, deployment, benchmarking,
+or commercialization not expressly allowed below requires a separate written
+agreement signed by RomanAILabs.
+
+## 1. Definitions
+
+"Licensor" means Daniel Harding and RomanAILabs.
+
 "Licensed Work" means the NRL machine-code engine, NrlPy Python front-end,
-associated assembly kernels, compiler/runtime components, and any other software,
-documentation, or materials provided by RomanAILabs under this license.
+Bio-Digital Brain architecture, associated assembly kernels, compiler/runtime
+components, scripts, examples, documentation, tests, model-object formats,
+ZPM/LMO/WAL/pruning systems, algorithms, interfaces, APIs, file formats,
+benchmarks, designs, diagrams, naming, and any other software, documentation,
+or materials provided by RomanAILabs under this license.
 
-"Commercial Use" means any use of the Licensed Work:
-- To provide a service (including SaaS, PaaS, or hosted offerings) for which you
-  receive compensation, directly or indirectly.
-- In any product, library, or derivative work that is sold, licensed, or
-  distributed for a fee.
-- For internal operations of any for-profit entity with annual gross revenue
-  exceeding $1,000,000 USD (or equivalent), unless the use is strictly non-production
-  research, benchmarking, or evaluation.
+"Evaluate" means to read, inspect, and run the Licensed Work locally on hardware
+you control solely to understand its behavior and determine whether to request a
+commercial license from RomanAILabs.
 
-"Change Date" means, for each version of the Licensed Work, three (3) years
-from the date that version is first publicly released by RomanAILabs.
+"Commercial Use" means any use of the Licensed Work, any derivative work, or any
+implementation of the Licensed Work's protected architecture, algorithms,
+interfaces, or file formats:
 
-### 2. Grant of License
-RomanAILabs grants you a non-exclusive, royalty-free, worldwide, non-transferable
-license to use, copy, modify, and distribute the Licensed Work solely for
-non-commercial, research, educational, and personal evaluation purposes.
+- To provide a service, including SaaS, PaaS, hosted inference, hosted learning,
+  hosted model orchestration, benchmarking-as-a-service, consulting, training,
+  integration, or other compensated offerings.
+- In any product, library, platform, application, derivative work, embedded
+  system, internal tool, research program, or business process that is sold,
+  licensed, rented, monetized, bundled, funded, deployed, or distributed for
+  commercial advantage.
+- For internal operations, product development, research and development,
+  evaluation, benchmarking, or procurement by any for-profit entity, startup,
+  partnership, government contractor, lab, fund, or affiliated organization.
+- To train, operate, optimize, benchmark, validate, market, or provide a
+  competing or substitute product, service, model-runtime system, or derivative.
 
-You may not use the Licensed Work for any Commercial Use without first obtaining
-a separate written commercial license from RomanAILabs.
+"Competing Use" means using, studying, copying, modifying, translating,
+benchmarking, analyzing, or implementing the Licensed Work, or any non-public or
+public information derived from it, to build, improve, benchmark, operate,
+market, fund, or provide a competing high-performance neural runtime, low-bit
+compute fabric, lattice execution engine, GGUF/LMO/ZPM runtime, model-memory
+system, neural acceleration service, hosted inference/learning service, or
+substantially similar product, service, architecture, or research system.
 
-### 3. Additional Use Grant (Limited Commercial Exception)
-You may use the Licensed Work in production within your own internal tools or
-products provided that:
-- The Licensed Work is not the primary value or competitive feature of your offering, and
-- You do not offer the Licensed Work (or substantial parts of its functionality) as
-  a service to third parties.
+## 2. Ownership And Reservation Of Rights
 
-This Additional Use Grant does not permit building a competing high-performance
-compute engine, low-bit neural fabric runtime, or direct derivative service of
-NRL kernel functionality.
+The Licensed Work is owned by Daniel Harding / RomanAILabs. No ownership,
+copyright, patent, trademark, trade-secret, database, moral, publicity, or other
+intellectual-property right is transferred to you.
 
-### 4. Performance Promise / Automatic Conversion
-On the Change Date (or earlier at RomanAILabs' sole discretion), the license for
-that specific version of the Licensed Work automatically converts to the
-Apache License, Version 2.0 (or a later version chosen by RomanAILabs).
-After conversion, all prior restrictions on Commercial Use are lifted for that version.
+All rights not expressly granted in this license are reserved. No implied
+license is granted by publication, source availability, course of dealing,
+estoppel, exhaustion, or any other theory.
 
-### 5. Attribution and Notices
-Any copy, modification, or derivative work must retain this license file, the
-above copyright notice, and the following prominent notice:
+Public availability of the Licensed Work, including availability on GitHub or
+any other hosting platform, does not waive any intellectual-property right and
+does not grant permission to copy, redistribute, fork for redistribution,
+commercialize, deploy, host, train on, or implement the Licensed Work except as
+expressly allowed below.
 
-"This software was originally released under the RomanAILabs Business Source
-License 1.1 by Daniel Harding / RomanAILabs."
+## 3. Limited Evaluation Permission
 
-### 6. No Warranty; Limitation of Liability
-THE LICENSED WORK IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
-FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL ROMANAILABS OR
-DANIEL HARDING BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY ARISING FROM,
-OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR ITS USE.
+Subject to full compliance with this license, RomanAILabs grants you a limited,
+revocable, non-exclusive, non-transferable, non-sublicensable, royalty-free
+permission to:
 
-### 7. Termination
-This license terminates automatically if you breach any term. Upon termination,
-you must cease all use and destroy all copies of the Licensed Work.
+- View and inspect the Licensed Work.
+- Download or clone one copy solely as needed for local Evaluation.
+- Run the Licensed Work locally solely for personal, non-commercial Evaluation.
+- Make temporary local modifications solely to test or understand the Licensed
+  Work, provided those modifications are not distributed, published, deployed,
+  used commercially, or used for Competing Use.
 
-For commercial licensing, support contracts, custom kernel development, or
-enterprise use inquiries, contact: daniel@romanailabs.com
+This is the entire public grant. No other use is allowed without a separate
+written agreement signed by RomanAILabs.
+
+## 4. Strict Prohibitions
+
+You may not, without a separate written agreement signed by RomanAILabs:
+
+- Copy, reproduce, publish, mirror, upload, redistribute, sell, sublicense,
+  rent, lease, lend, or otherwise provide the Licensed Work or any derivative
+  to any third party, except for the single local Evaluation copy allowed above.
+- Create, publish, distribute, or operate a fork, clone, port, wrapper,
+  translation, derivative work, hosted version, service, SDK, API, package,
+  container, binary, model runtime, or product based on the Licensed Work.
+- Use the Licensed Work for Commercial Use or Competing Use.
+- Use the Licensed Work to design, build, validate, test, benchmark, train,
+  tune, market, or fund any competing or substitute system.
+- Implement the Bio-Digital Brain, NRL, LMO, ZPM, Resolution Ladder, WAL-backed
+  model-memory, drift-conquest, disk-native learning, packed lattice runtime,
+  or substantially similar architecture based on the Licensed Work.
+- Use clean-room, black-box, white-box, reimplementation, transpilation,
+  decompilation, tracing, profiling, instrumentation, benchmarking, or
+  translation techniques to avoid this license.
+- Remove, obscure, alter, or misrepresent RomanAILabs attribution, copyright
+  notices, license notices, provenance metadata, warnings, or contact details.
+- Use the Licensed Work or repository contents as training data, evaluation
+  data, retrieval context, benchmark input, fine-tuning material, or synthetic
+  data source for any machine-learning, AI, code-generation, search, or
+  retrieval system.
+- Publish benchmark results, performance claims, architecture comparisons,
+  security reports, reverse-engineering notes, or technical analyses involving
+  the Licensed Work without prior written permission from RomanAILabs, except
+  for good-faith private security disclosure to RomanAILabs.
+- Circumvent usage limits, license checks, access controls, safety controls,
+  provenance markers, or technical protection measures.
+
+## 5. No Commercial Rights
+
+No Commercial Use is permitted under this public license. Commercial evaluation,
+enterprise evaluation, procurement evaluation, internal company use, paid
+research, hosted use, investor diligence, product planning, integration work,
+consulting, resale, redistribution, and production use all require a separate
+written commercial license from RomanAILabs before any such use begins.
+
+For commercial licensing, enterprise use, investment diligence, support
+contracts, custom kernel development, model-runtime integrations, or
+redistribution rights, contact:
+
+daniel@romanailabs.com
+
+## 6. No Patent License
+
+No patent license is granted. All patent rights are expressly reserved by
+Daniel Harding / RomanAILabs.
+
+You may not use, make, have made, sell, offer for sale, import, export,
+commercialize, deploy, host, or distribute any implementation that practices any
+claim of any patent or patent application owned, controlled, filed, or later
+acquired by Daniel Harding / RomanAILabs, except under a separate written patent
+license signed by RomanAILabs.
+
+Any right you may have under this license terminates automatically if you
+initiate, assist, fund, or participate in any patent, copyright, trade-secret,
+trademark, ownership, inventorship, or licensing claim against Daniel Harding,
+RomanAILabs, the Licensed Work, or any RomanAILabs customer, licensee, or user.
+
+## 7. No Trademark Or Brand License
+
+RomanAILabs, NRL, NrlPy, Bio-Digital Brain, ZPM, LMO, Resolution Ladder, and
+associated names, logos, architecture names, marks, and branding are trademarks,
+service marks, or trade names of Daniel Harding / RomanAILabs. This license
+grants no trademark, brand, domain-name, or endorsement rights.
+
+## 8. Attribution And Notices
+
+Every permitted local Evaluation copy must retain this license, the copyright
+notice above, and the following prominent notice:
+
+"This software was originally released under the RomanAILabs Proprietary
+Source-Available Evaluation License 1.0 by Daniel Harding / RomanAILabs. All
+rights are reserved. No commercial, redistribution, derivative, AI-training, or
+competitive use is permitted without written permission."
+
+## 9. Contributions
+
+RomanAILabs is not obligated to accept external contributions. Any contribution
+you submit is governed by CONTRIBUTING.md and is accepted only if RomanAILabs
+receives the ownership assignment or exclusive license described there. Do not
+submit contributions that you cannot assign or exclusively license to
+RomanAILabs.
+
+## 10. Third-Party Materials
+
+Model files, datasets, dependencies, operating systems, compilers, package
+managers, and third-party tools remain governed by their own licenses. This
+license does not grant rights to any third-party material and does not override
+third-party restrictions.
+
+## 11. Termination
+
+This license terminates automatically and immediately if you breach any term or
+if RomanAILabs gives you notice of termination. Upon termination, you must
+immediately cease all use, copying, modification, distribution, hosting,
+deployment, benchmarking, analysis, and possession of the Licensed Work and
+destroy all copies in your possession or control, except where retention is
+required by law.
+
+Sections concerning ownership, reservation of rights, prohibitions, commercial
+rights, patents, trademarks, attribution, contributions, third-party materials,
+termination, warranty, liability, and governing terms survive termination.
+
+## 12. No Warranty
+
+THE LICENSED WORK IS PROVIDED "AS IS" AND "AS AVAILABLE", WITHOUT WARRANTY OF
+ANY KIND, EXPRESS, IMPLIED, STATUTORY, OR OTHERWISE, INCLUDING BUT NOT LIMITED
+TO WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE,
+NON-INFRINGEMENT, ACCURACY, SECURITY, PERFORMANCE, RELIABILITY, OR
+AVAILABILITY.
+
+YOU ARE SOLELY RESPONSIBLE FOR TESTING, VALIDATING, BACKING UP, SANDBOXING, AND
+SECURING YOUR USE OF THE LICENSED WORK.
+
+## 13. Limitation Of Liability
+
+TO THE MAXIMUM EXTENT PERMITTED BY LAW, DANIEL HARDING, ROMANAILABS, AND THEIR
+CONTRIBUTORS, AFFILIATES, LICENSORS, CONTRACTORS, AND REPRESENTATIVES SHALL NOT
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL,
+EXEMPLARY, PUNITIVE, OR OTHER DAMAGES; LOSS OF PROFITS; LOSS OF REVENUE; LOSS
+OF DATA; BUSINESS INTERRUPTION; SECURITY INCIDENTS; MODEL OUTPUTS; HARDWARE
+DAMAGE; OR PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES, ARISING FROM OR RELATED
+TO THE LICENSED WORK OR THIS LICENSE, WHETHER UNDER CONTRACT, TORT, STRICT
+LIABILITY, NEGLIGENCE, OR ANY OTHER THEORY, EVEN IF ADVISED OF THE POSSIBILITY
+OF SUCH DAMAGES.
+
+## 14. Governing Terms
+
+If any provision is unenforceable, the remaining provisions remain in effect to
+the maximum extent permitted by law. No waiver is effective unless signed in
+writing by RomanAILabs. This license is the complete public license grant for
+the Licensed Work and supersedes any conflicting public license text in this
+repository.
+
+No public release, source publication, issue discussion, pull request, README,
+documentation page, release note, or informal communication grants rights beyond
+this license unless it is a separate written agreement signed by RomanAILabs.
+
+For licensing questions, commercial terms, patent permissions, or written
+permissions, contact:
+
+daniel@romanailabs.com

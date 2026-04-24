@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
 """Chat intent mapping (no full REPL in CI)."""
 
 from __future__ import annotations

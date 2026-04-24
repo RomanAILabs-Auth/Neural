@@ -1,3 +1,5 @@
+<!-- Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved. -->
+
 # NRL Physics-Native Language Surface (v0 design note)
 
 **Status:** Design intent — not yet implemented syntax.  

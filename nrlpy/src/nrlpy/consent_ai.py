@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
 """LM/AI opt-in consent file + optional Windows user env (matches ``nrl -ai``)."""
 
 from __future__ import annotations

@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
 """Append-only evidence log helpers (immune and specialization events).
 
 Schema: ``docs/schemas/immune_event_v1.schema.json``. Events are JSON lines (JSONL).

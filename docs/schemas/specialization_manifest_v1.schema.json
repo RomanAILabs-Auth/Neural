@@ -1,21 +1,43 @@
 {
+  "": "Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://romanailabs.com/schemas/nrl/specialization_manifest_v1.schema.json",
   "title": "NRL specialization manifest v1 (stub)",
   "type": "object",
-  "required": ["schema_id", "workload_id", "structural_hash", "engine_abi_tag", "policy_id"],
+  "required": [
+    "schema_id",
+    "workload_id",
+    "structural_hash",
+    "engine_abi_tag",
+    "policy_id"
+  ],
   "properties": {
     "schema_id": {
       "type": "string",
       "const": "nrl.specialization_manifest.v1"
     },
-    "workload_id": { "type": "string" },
-    "structural_hash": { "type": "string" },
-    "engine_abi_tag": { "type": "string" },
-    "policy_id": { "type": "string" },
-    "artifact_uri": { "type": "string" },
-    "promoted_utc": { "type": "string", "format": "date-time" },
-    "shadow_run_id": { "type": "string" }
+    "workload_id": {
+      "type": "string"
+    },
+    "structural_hash": {
+      "type": "string"
+    },
+    "engine_abi_tag": {
+      "type": "string"
+    },
+    "policy_id": {
+      "type": "string"
+    },
+    "artifact_uri": {
+      "type": "string"
+    },
+    "promoted_utc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "shadow_run_id": {
+      "type": "string"
+    }
   },
   "additionalProperties": true
 }

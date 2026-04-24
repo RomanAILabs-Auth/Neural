@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
 /*
  * version.c - build/version banner for NRL.
  * Copyright RomanAILabs - Daniel Harding (GitHub RomanAILabs-Auth)

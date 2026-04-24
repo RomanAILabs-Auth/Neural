@@ -1,3 +1,5 @@
+<!-- Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved. -->
+
 # NRL Initial Native Benchmark Snapshot
 
 Machine: local development host (Windows x86_64, AVX2 available)

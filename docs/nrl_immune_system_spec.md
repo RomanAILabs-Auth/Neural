@@ -1,3 +1,5 @@
+<!-- Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved. -->
+
 # NRL Immune System Specification
 
 **Version:** 1.0  

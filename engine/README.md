@@ -1,3 +1,5 @@
+<!-- Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved. -->
+
 # NRL Engine
 
 The NRL engine is the machine-code-first core: INT4 neural lattice kernels, CPU feature dispatch, ZPM / Omega routing, and the native `nrl` CLI bound to a stable C ABI (`nrl_v1_*`).

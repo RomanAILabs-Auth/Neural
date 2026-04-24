@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
 """Global Real-Time Lightning Propagation Lattice — NRL control-plane PoC.
 
 Maps **live** lightning strike samples (Blitzortung-style WebSocket JSON) to a

@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
 """LLM- and script-friendly facade: same neural/binary entry points without NumPy.
 
 Use ``from nrlpy.compat import nrl`` or ``nrlpy run script.py`` / ``nrlpy script.py``

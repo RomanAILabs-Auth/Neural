@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
 # Works both ways:
 #   nrlpy run examples/assimilate_llm_solver.py
 #   python examples/assimilate_llm_solver.py   (needs PYTHONPATH=nrlpy/src)

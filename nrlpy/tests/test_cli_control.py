@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
 """``nrlpy control`` and bench control-hints CLI."""
 
 from __future__ import annotations

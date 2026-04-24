@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
 """LM/AI consent toggle (``nrlpy -ai``)."""
 
 from __future__ import annotations

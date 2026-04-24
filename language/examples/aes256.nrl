@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
 # Synthetic mix micro-benchmark (.nrl v0). Not AES-256; exercises a fixed XOR/rotate
 # ladder and prints FNV-1a over a 32-byte state. For digest lock, use aes256_locked.nrl
 # (requires nrl with expected_fnv1a64 parsing).

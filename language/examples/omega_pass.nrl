@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
 # Minimal .nrl program for native CLI / nrlpy.
 # Supported keys: mode, profile, neurons, iterations, reps, threshold
 

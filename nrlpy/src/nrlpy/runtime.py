@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
 """Typed runtime wrappers for the nrlpy C extension."""
 
 from __future__ import annotations
@@ -70,8 +71,26 @@ def active_variant(kernel: str) -> str:
     return _core.active_variant(kernel)
 
 
+# Phase 11 — prefer the native C FNV when ``_core`` exports it. The
+# pure-Python loop below is O(n) Python-level overhead per byte and is a
+# pathological hot path for LMO absorption on multi-GB GGUFs (it was the
+# cause of the hour-plus absorption stall on Phi-3 mini). The native
+# export in ``engine/src/capi.c`` matches ``checksum_u64`` bit-for-bit,
+# so the on-disk attestation format is unchanged.
+_native_fnv1a64 = getattr(_core, "fnv1a64_bytes", None)
+
+
 def fnv1a64_packed(data: bytes | bytearray | memoryview) -> int:
     """FNV-1a 64-bit over bytes; matches ``checksum_u64`` in ``engine/src/main.c``."""
+    if _native_fnv1a64 is not None:
+        # ``_core.fnv1a64_bytes`` accepts anything implementing the buffer
+        # protocol; ``bytes(...)`` is a cheap guard for exotic types
+        # (e.g. memoryview of non-contiguous slices) that the C binding
+        # would otherwise reject.
+        try:
+            return int(_native_fnv1a64(data))
+        except TypeError:
+            return int(_native_fnv1a64(bytes(data)))
     x = 1469598103934665603
     prime = 1099511628211
     for b in data:

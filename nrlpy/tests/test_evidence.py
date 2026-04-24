@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
 """Evidence log (JSONL) tests."""
 
 from __future__ import annotations

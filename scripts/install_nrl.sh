@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
 set -euo pipefail
 
 OPT_IN="${NRL_INSTALL_OPT_IN_LM_AI:-ask}"
@@ -107,3 +108,5 @@ echo "  nrlpy:   ${INSTALL_BIN}/nrlpy  (reload shell, then: nrlpy script.py)"
 echo "  consent: ${CONSENT_PATH}"
 echo "  lm_ai_opt_in: ${ENABLE}"
 echo "  NRL_ROOT: ${SHARE} (examples + py/nrlpy for nrl demo)"
+echo "  health:  nrlpy doctor"
+echo "  quick:   nrlpy absorb <model.gguf>; nrlpy chat <model.gguf> --rewired"

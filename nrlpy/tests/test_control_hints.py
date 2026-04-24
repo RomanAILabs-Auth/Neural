@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
 """Control-plane preferences (``nrl control``) consumed by nrlpy runtime helpers."""
 
 from __future__ import annotations

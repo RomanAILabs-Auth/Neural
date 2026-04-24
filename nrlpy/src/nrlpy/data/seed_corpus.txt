@@ -1,0 +1,130 @@
+Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
+
+What is NRL-AI?
+NRL-AI is RomanAILabs' pure-lattice inference path. It runs on CPU. No GPU required. No libllama decode. Every reply is served by SimHash anchors, ZPM transition collapse, and Omega-routed fragment walks.
+
+Who built NRL-AI?
+NRL-AI was built by RomanAILabs as a replay-locked execution lattice. It is written in C for the engine and Python for the control plane. Everything you see is honest silicon work.
+
+What hardware do I need to run NRL-AI?
+You need a CPU that supports AVX2 or a scalar fallback. No GPU. No CUDA. No ROCm. No Apple Neural Engine. 8 gigabytes of RAM is comfortable. It runs on a laptop.
+
+Do I need a GPU?
+No. NRL-AI does not use any GPU. It does not use CUDA, ROCm, or any accelerator. If you only have a CPU you are the target audience.
+
+Does NRL-AI use llama.cpp?
+No. NRL-AI is the pure lattice path. There is no libllama in the reply loop. There is no transformer decode. If you want libllama you can pass the legacy-llama flag on nrl run.
+
+How fast is NRL-AI?
+NRL-AI targets at least one thousand words per second on CPU. On most corpora the bench lands between three thousand and nine thousand words per second per turn. The bench gate at schema nrl-ai bench v1 is one thousand words per second.
+
+What is a word per second?
+A word per second is measured as total emitted reply words divided by total wall seconds. Warmup turns are excluded. The mean is the gate. The p50 and p95 are reported as honest distribution tails.
+
+Why is NRL-AI so fast?
+NRL-AI does not compute transformer math. It serves replies by anchoring your query with SimHash256 then walking a precomputed Omega transition map. The hot path is memory indirection, not matmul.
+
+Is NRL-AI deterministic?
+Yes. NRL-AI is replay-locked. Given a corpus and a query you always get the same reply. There is no random sampling. There is no wall-clock state in the critical path. Two runs produce bit-identical reply transcripts.
+
+What does replay-locked mean?
+Replay-locked means the hot path is a pure function of its inputs. The same index and the same query always produce the same fragment walk, the same word count, and the same stop reason.
+
+What is SimHash?
+SimHash is a locality-sensitive hash. Similar inputs produce similar hashes. NRL-AI uses 256-bit SimHash over character trigrams to anchor corpus fragments and user queries. Near-match is a simple Hamming distance scan.
+
+What is a corpus?
+A corpus is a plain text file. NRL-AI ingests it into fragments, SimHash anchors, a ZPM transition map, and a manifest. The ingest step is a one-shot preparation of your knowledge base.
+
+What is ZPM?
+ZPM is the Zero-Point Mapping engine. It collapses static transitions at ingest time so the serving path is a lookup rather than a recomputation. ZPM is how muscle memory works in NRL.
+
+What is Omega?
+Omega is the NRL routing lattice. It wakes and prunes sub-lattices. In NRL-AI it picks the next fragment deterministically by visiting the highest-count transition first. No randomness.
+
+How do I ingest a corpus?
+Run nrl-ai ingest path-to-corpus.txt. The command writes fragments, anchors, transitions, and a manifest to your index directory. Default index lives under the NRL-AI-INDEX environment variable or the user home.
+
+How do I chat with NRL-AI?
+Run nrl-ai chat after ingesting a corpus. The REPL boots with a Neural AI banner and streams replies sentence by sentence. Use slash help for commands. Use slash quit to exit.
+
+How do I benchmark NRL-AI?
+Run nrl-ai bench. The command runs a replay-locked query stream against your index and emits an nrl-ai bench v1 JSON payload on standard output. Exit code zero means the gate passed.
+
+How do I see the roadmap?
+Run nrl-ai status. The command prints a JSON payload that lists every prompt, its scope, and whether it has shipped. Prompt numbers reflect the seven-prompt plan for the pure NRL-AI rebuild.
+
+What is the seven-prompt plan?
+Prompt one scaffolded the CLI. Prompt two shipped ingest. Prompt three shipped resolve. Prompt four shipped compose. Prompt five shipped the polished REPL. Prompt six shipped the bench gate. Prompt seven ships docs, seed corpora, and the out-of-box demo.
+
+What is the out-of-box demo?
+Run nrl-ai demo. The command ingests the packaged seed corpus into a temporary index and boots the chat REPL. You can talk to NRL-AI immediately without building your own corpus first.
+
+What are the slash commands in the chat REPL?
+Slash help prints the command list. Slash stats prints cumulative session words, wall seconds, and words per second. Slash reset zeros the counters. Slash status prints the index path. Slash quit or slash exit leaves the REPL.
+
+What does a resolver miss mean?
+A resolver miss means your query was farther than the Hamming threshold from every fragment anchor. NRL-AI never synthesizes in that case. It tells you the closest fragment distance and stays honest.
+
+What is the Hamming threshold?
+The Hamming threshold is the maximum bit distance between your query SimHash and a fragment SimHash that still counts as a hit. The default is ninety-six bits. Tune it with the threshold flag.
+
+Can I change the threshold?
+Yes. Pass the threshold flag to resolve, compose, chat, or bench. Lower values make misses more common and replies more precise. Higher values make hits more common and replies more associative.
+
+How do I stream output?
+NRL-AI streams every fragment as it is composed. Each sentence is flushed to standard output as it lands. You can pause between sentences with the chunk delay flag if you want a slower feel.
+
+What is the difference between hit and miss?
+A hit means the resolver found a fragment within the Hamming threshold. NRL-AI walks the Omega transition map from that fragment. A miss means no fragment was close enough. NRL-AI prints a short honest note and waits for your next turn.
+
+How does NRL-AI handle a new topic?
+If your topic is not in the corpus you will get a resolver miss. You can ingest a new corpus that covers the topic. NRL-AI never invents replies outside the corpus.
+
+Can I use multiple corpora?
+Yes. Point the index flag at a different directory. Each index is a full self-contained knowledge base. You can keep one per project.
+
+Where is the default index stored?
+The default index is the NRL-AI-INDEX environment variable if set. Otherwise it is a folder under your home directory named dot nrl slash nrl-ai. You can always override with the index flag.
+
+Is NRL-AI open source?
+NRL-AI is not open source. It ships under the RomanAILabs Proprietary Source-Available Evaluation License 1.0. The source is readable for local evaluation only; redistribution, derivative, hosted, AI-training, commercial, and competing use require written permission.
+
+What is the bench contract?
+The bench contract is the JSON schema nrl-ai bench v1. It includes the corpus SHA-256, fragment count, threshold, warmup count, measured turns, hits, misses, total words, total wall seconds, wps mean, wps p50, wps p95, min, max, target, gate pass, and env snapshot.
+
+What happens on a bench failure?
+If the mean words per second is below the target, the bench exits with code four. The JSON payload still prints with gate pass false so you can inspect every turn.
+
+How do I export a bench run?
+Pass the out flag to nrl-ai bench. The command writes the full JSON payload to that path in addition to standard output. Good for CI artifacts.
+
+Can NRL-AI learn from conversations?
+Not in this release. The lattice is static after ingest. Learning is a deliberate step: add new text to the corpus and ingest again. This keeps the system replay-locked and auditable.
+
+Is there a chat history?
+Each REPL session tracks per-turn counters and cumulative words per second. Full history logging is not on by default. You can pipe the REPL output to a file.
+
+Is NRL-AI private?
+Yes. NRL-AI runs entirely on your machine. No network calls. No telemetry by default. Your corpus never leaves disk.
+
+How big can a corpus be?
+The current NRL-AI can comfortably index tens of thousands of fragments on a laptop. Bigger is fine. The hot path is a linear scan over packed SimHash anchors, which is fast on CPU caches.
+
+Thank you for trying NRL-AI.
+You are welcome. Ask anything covered by the corpus. The lattice is ready.
+
+Tell me about speed.
+NRL-AI is designed for speed. The lattice skips the transformer entirely. A single turn is a SimHash computation plus a Hamming scan plus an Omega walk. Reply generation is bounded by memory bandwidth, not by matmul.
+
+Tell me about safety.
+NRL-AI is deterministic, replay-locked, and corpus-bounded. It cannot hallucinate outside its corpus because it physically cannot synthesize tokens. Every word in a reply came from a fragment you ingested.
+
+Tell me about the architecture.
+NRL-AI has three planes. Ingest prepares the on-disk index. Resolve anchors a query to its nearest fragment. Compose walks Omega transitions to stream the reply. The REPL glues them together. The bench gate proves the words-per-second contract.
+
+Hello there.
+Hello. I am NRL-AI. Ask me about speed, architecture, safety, or the seven-prompt plan.
+
+Hi.
+Hi. I am Neural AI from RomanAILabs. I run on the NRL lattice. What would you like to know?

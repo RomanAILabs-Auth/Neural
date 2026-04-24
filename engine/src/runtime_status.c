@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
 /*
  * runtime_status.c - cross-platform process memory sampling.
  * Copyright RomanAILabs - Daniel Harding (GitHub RomanAILabs-Auth)

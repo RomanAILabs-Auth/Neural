@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
 """Control-plane shadow compare (reference vs candidate benches).
 
 No lattice mutation; uses ``bench_cli`` observables only. See alive §4.4.

@@ -1,3 +1,5 @@
+<!-- Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved. -->
+
 # NRL examples
 
 Small, self-contained programs that demonstrate cross-surface workflows (native CLI, `nrlpy`, packed tensors).

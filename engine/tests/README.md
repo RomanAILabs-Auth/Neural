@@ -1,3 +1,5 @@
+<!-- Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved. -->
+
 # `engine/tests`
 
 C-level tests for the NRL engine: ABI sanity, INT4 reference parity, AVX2 lockstep checks, ZPM static accounting, and Omega statistics consistency.

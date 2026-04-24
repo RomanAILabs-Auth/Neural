@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
 """Bounded on-disk vocabulary store (control-plane; not kernel training).
 
 Default cap: 4 GiB (``max_bytes`` in ``config.json``). Words are tokenized from

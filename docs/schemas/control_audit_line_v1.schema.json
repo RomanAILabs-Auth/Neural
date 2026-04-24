@@ -1,10 +1,18 @@
 {
+  "": "Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://romanailabs.com/schemas/nrl/control_audit_line_v1.schema.json",
   "title": "NRL control plane audit JSONL line v1",
   "description": "One object per line in build/control/control_audit.jsonl (native nrl control / nrl chat).",
   "type": "object",
-  "required": ["ts_utc", "channel", "intent", "govern", "outcome", "raw"],
+  "required": [
+    "ts_utc",
+    "channel",
+    "intent",
+    "govern",
+    "outcome",
+    "raw"
+  ],
   "properties": {
     "ts_utc": {
       "type": "string",
@@ -13,7 +21,10 @@
     },
     "channel": {
       "type": "string",
-      "enum": ["chat", "control"],
+      "enum": [
+        "chat",
+        "control"
+      ],
       "description": "Dispatch surface that handled the message."
     },
     "intent": {
@@ -28,7 +39,13 @@
     },
     "outcome": {
       "type": "string",
-      "enum": ["blocked", "advisory", "defer_confirm", "error_io", "applied"]
+      "enum": [
+        "blocked",
+        "advisory",
+        "defer_confirm",
+        "error_io",
+        "applied"
+      ]
     },
     "raw": {
       "type": "string",

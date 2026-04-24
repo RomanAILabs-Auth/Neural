@@ -1,3 +1,5 @@
+<!-- Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved. -->
+
 # NrlPy
 
 Python front-end for the NRL engine: typed wrappers over `libnrl`, a CPython extension (`nrlpy._core`), and a small CLI that mirrors common `nrl` workflows.

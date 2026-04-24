@@ -1,15 +1,16 @@
+# Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
 [build-system]
 requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "nrlpy"
-version = "0.1.0"
-description = "Python front-end for the NRL machine-code engine."
+version = "1.0.0"
+description = "Python front-end for the NRL machine-code engine (Final Product)."
 authors = [{ name = "Daniel Harding", email = "daniel@romanailabs.com" }]
 readme = "README.md"
 requires-python = ">=3.9"
-license = { text = "RomanAILabs Business Source License 1.1 (RBSL 1.1)" }
+license = { text = "RomanAILabs Proprietary Source-Available Evaluation License 1.0" }
 classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: C",
@@ -31,7 +32,7 @@ packages = ["nrlpy"]
 include-package-data = true
 
 [tool.setuptools.package-data]
-nrlpy = ["py.typed", "_core.pyi", "*.pyd", "*.so"]
+nrlpy = ["py.typed", "_core.pyi", "*.pyd", "*.so", "data/*.txt"]
 
 [tool.ruff]
 line-length = 100

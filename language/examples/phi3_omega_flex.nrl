@@ -1,0 +1,32 @@
+# Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
+# Max-flex Phi-3 Mini run under omega-hybrid gating (P2+).
+# Until P2 ships, gate_layer_policy is parsed and stored but not enforced.
+# The virtual_tps field will equal executed_tps under the P1 runner.
+
+schema = nrl.manifest.v1
+mode = gguf_run
+profile = omega-hybrid
+
+model = models/phi-3-mini-4k-instruct.Q4_K_M.gguf
+prompt = "Tell me one short, surprising fact about space."
+max_tokens = 128
+temperature = 0.7
+top_p = 0.9
+top_k = 40
+repeat_penalty = 1.1
+seed = 42
+n_ctx = 2048
+n_threads = 0
+n_batch = 512
+chat_format = phi3
+
+# L1 gating (P2+): these parse today, take effect when the layer gate lands.
+gate_layer_policy = omega-hybrid
+gate_kv_policy = zpm
+gate_min_active = 6
+gate_wake_rate = 0.25
+
+respect_control_hints = true
+muscle_memory = on
+telemetry_granularity = per_token
+benchmark_class = B

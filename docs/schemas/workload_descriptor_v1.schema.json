@@ -1,4 +1,5 @@
 {
+  "": "Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://romanailabs.com/schemas/nrl/workload_descriptor_v1.schema.json",
   "title": "NRL workload descriptor v1",
@@ -21,13 +22,28 @@
       "type": "string",
       "description": "Stable harness identifier (e.g. nrl_vs_cpp)."
     },
-    "neurons": { "type": "integer", "minimum": 2 },
-    "iterations": { "type": "integer", "minimum": 1 },
-    "reps": { "type": "integer", "minimum": 1 },
-    "threshold": { "type": "integer", "minimum": 1, "maximum": 15 },
+    "neurons": {
+      "type": "integer",
+      "minimum": 2
+    },
+    "iterations": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "reps": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "threshold": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 15
+    },
     "profiles": {
       "type": "array",
-      "items": { "type": "string" },
+      "items": {
+        "type": "string"
+      },
       "minItems": 1
     },
     "nrl_version": {

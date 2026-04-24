@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
 """Isolate learn-store and chat paths per test process."""
 
 from __future__ import annotations

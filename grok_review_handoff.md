@@ -1,3 +1,5 @@
+<!-- Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved. -->
+
 # NRL Grok Review Handoff
 
 Use this prompt with Grok for an external architecture and implementation review.

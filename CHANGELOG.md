@@ -1,10 +1,91 @@
+<!-- Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved. -->
+
 # Changelog
 
 All notable changes to NRL will be documented in this file.
 
 ## [Unreleased]
 
+### Bio-Digital Brain MVP v3.0 (P1-P7)
+- **P1 LMO absorption:** disk-native LMO creation for GGUF models via `nrlpy absorb`, with retained bytes, packed INT4 tiles, router graph, manifest, and attest output.
+- **P2 Learn Daemon:** idle-gated background supervisor with bounded synthetic prompts, CPU cap, status snapshots, and `NRL_LEARN_MODE` controls.
+- **P3 Chat integration:** GGUF chat path with rewired ladder behavior, response recall, session stats, and cache-aware telemetry.
+- **P4 Crash-safe ZPM persistence:** WAL-first ZPM writes, recovery, snapshots, and `nrlpy lmo info` persistence reporting.
+- **P5 Drift Conqueror:** coverage metric, weak-bucket detection, idle conquest prompts, growth cap via `NRL_LEARN_MAX_GROWTH_PCT`, and `nrlpy lmo coverage`.
+- **P6 HD quota management:** `NRL_LMO_MAX_GB`, `LmoDiskManager`, ZPM LRU pruning by access stats, WAL compaction, and `nrlpy lmo prune`.
+- **P7 Final integration:** `tests/test_bio_digital_brain_e2e.py`, `NRL_SAFE_MODE=1`, `nrlpy doctor`, documentation refresh, and final MVP completion status.
+
 ### Added
+- **GGUF P2-Active prefill-cache gate** — first **structural** gate source; flips `virtual_tps > executed_tps` from real shared-prefix reuse rather than a numeric fixture.
+  - New `nrlpy.gates` module: `GateReport` (typed, validated) and `PrefillGate` (session-scoped shared-prefix tracker with `compute_for` / `observe` / `reset` / `last_report`). Skip ratio clamped below `1.0 − ε` so the `virtual_tps` formula never divides by zero. Accepts either pre-tokenized sequences (native backend) or raw strings (whitespace / per-char fallback for stub + short-prompt tests).
+  - `GgufManifest.prefill_cache: str` (`"off"` / `"session"`, validated at parse time).
+  - `run_gguf(prefill_gate: PrefillGate | None = ...)` — when provided and the manifest sets `prefill_cache = session`, the gate's report drives `TpsReport.gate_skip_ratio` with `gate_source = "prefill_cache"`. Structural gate always wins over `gate_skip_ratio_override`; override still fires when the gate reports zero-skip.
+  - `GgufRunResult` gains `gate_source: str | None` and `gate_report: dict` fields.
+  - `format_banner` emits `[P2-Active (prefill cache)]` in the headline and a trailing block showing `shared_prefix_len` / `prompt_token_count` / `skip_ratio` / self-check `virtual_tps_formula_ok`. The non-claim invariant holds: a prefill-gate run never wears the simulation label.
+  - Evidence log (`nrl.gguf_run.v1`) gains `gate_source`, `gate_report`, and `prefill_cache` fields; `gate_simulation_active` now cleanly reflects `gate_source == "override"`.
+  - `benchmarks/gguf_golden.py` — new `--mode p2active-prefill` (9-assertion two-turn proof: turn 1 preserves the hinge, turn 2 flips it from `prefill_cache` source with formula match and correct banner label). Integrated into `--mode auto`.
+  - `.github/workflows/python-ci.yml` — `p2active-prefill` is a **required** gate on both Ubuntu and Windows legs.
+  - `scripts/live_readiness_gguf.{ps1,sh}` accept the new mode.
+  - `nrlpy/tests/test_gates.py` (10 unit tests: `GateReport` invariants, `PrefillGate` lifecycle, clamp-below-1.0, shared-prefix math on strings + sequences, reset semantics, per-char fallback).
+  - `nrlpy/tests/test_gguf.py` — 10 new integration tests covering manifest parsing of `prefill_cache`, turn-1 hinge preservation, turn-2 structural flip, gate-wins-over-override precedence, `off`-disables-gate, fall-through-to-override on zero-skip, banner label, evidence-log schema.
+  - `language/spec/nrl_manifest_v1.md` — "L1 — P2-Active structural gate (prefill cache)" subsection; simulation-hinge subsection renumbered below it.
+  - `docs/nrl_gguf_runner_architecture.md` §1.0.1 (gate sources + resolution order), §1.0.2 (prefill-cache gate full spec including native-vs-stub semantics), §1.0.3 (override reduced to "useful for isolated math testing"). The four-source provenance table (`prefill_cache` / `override` / `layer_skip` / `none`) is the single source of truth.
+  - `docs/README.md` phase table splits P2-Active into three rows: simulation hinge (shipped, dev-only), prefill cache (**shipped**, first structural), layer-skip callback (planned).
+- **GGUF P2-Active simulation hinge** — the first legitimate `virtual_tps > executed_tps` reading, explicitly labeled as simulation and locked in CI.
+  - `GgufManifest.gate_skip_ratio_override: float` (v1 manifest key; `[0.0, 1.0)`; rejected out-of-range at parse time). Env override `NRL_GATE_SKIP_RATIO_OVERRIDE` with explicit-manifest-wins precedence.
+  - `run_gguf` writes the override into `TpsReport.gate_skip_ratio` *after* decode (before `finalize()`), which flips `virtual_tps` to `executed_tps / (1 − override)` exactly. Cache-hit replays deliberately do not apply the override (nothing to skip).
+  - `format_banner` marks the headline `[P2-Active simulation (override)]` and appends a trailing simulation block showing `gate_skip_ratio_override` and a self-check line `virtual_tps_formula_ok    yes`. Non-simulation runs (override = 0.0) keep the prior P1 / P2-Shadow wording unchanged.
+  - Evidence log (`nrl.gguf_run.v1`) gains `gate_skip_ratio_override` and `gate_simulation_active` fields.
+  - `benchmarks/gguf_golden.py` — new `--mode p2active-sim` runs the stub backend with `override = 0.5` and asserts: `gate_skip_ratio == override`, `virtual_tps > executed_tps`, `virtual_tps * (1 − gate_skip_ratio) == executed_tps`, banner labels the simulation, banner's `virtual_tps_formula_ok` line reports `yes`. Integrated into `--mode auto`.
+  - `.github/workflows/python-ci.yml` — `p2active-sim` is a **required** gate on both Ubuntu and Windows legs, running after the stub gate, before the advisory full-tree lint/test.
+  - `scripts/live_readiness_gguf.{ps1,sh}` accept the new mode.
+  - `nrlpy/tests/test_gguf.py` — 9 new tests covering manifest + env override validation, env vs manifest precedence, formula-holds across four override values, banner labeling, cache-hit override-inert guarantee, and evidence-log fields.
+  - `language/spec/nrl_manifest_v1.md` — new "L1 — P2-Active simulation hinge" subsection plus the `NRL_GATE_SKIP_RATIO_OVERRIDE` env var row.
+  - `docs/nrl_gguf_runner_architecture.md` §1.0.1 — explicit "dev / CI only" subsection explaining the override is not a performance claim, surfaces that label it as simulation, and the P3 migration path (callback-sourced `gate_skip_ratio`).
+  - `docs/README.md` phase table — splits "P2-Active" into "simulation hinge (shipped)" and "real libllama elision (in progress)".
+- **GGUF golden harness + cross-OS readiness gate** — claim-governance surface for the P1 runner.
+  - `benchmarks/gguf_golden.py` — three modes (`stub` / `real` / `auto`). Stub mode creates a synthetic `.gguf`, runs `run_gguf` with `NRL_INFERENCE=stub`, and verifies: token count = `max_tokens`, completion SHA-256 matches the deterministic `_StubLlm` expansion for the seed, `executed_tps > 0`, `virtual_tps == executed_tps` (the P1 / P2-Shadow honesty hinge), `gate_skip_ratio == 0`, and first-run is a cache miss. Real mode hard-asserts non-empty completion, positive tokens, the same honesty hinge, and records completion SHA + the four-metric TPS for diffable claim artifacts. Emits `build/gguf_golden/gguf_golden.{json,md}`.
+  - `scripts/live_readiness_gguf.ps1` + `scripts/live_readiness_gguf.sh` — import probe for `nrlpy.gguf` / `nrlpy.gguf_chat`, then the golden harness. Exit codes: `0` pass, `1` regression, `2` config error (real mode without a model). Honors `NRL_GGUF_GOLDEN_MODEL` and `NRL_INFERENCE`.
+  - `python-ci.yml` — stub-mode golden harness is a required gate on both Ubuntu and Windows legs. Per-leg upload of `build/gguf_golden/*` via `actions/upload-artifact@v4` for cross-OS diffing.
+  - `docs/PRODUCTION_READINESS.md` §1 gains two rows pointing at the new gate (stub + real) alongside the existing `release_check` / `live_readiness` entries.
+  - `benchmarks/README.md` + `scripts/README.md` updated with examples.
+- **Python CI + docs index + native GGUF routing hint** — makes the P1 runner discoverable.
+  - `.github/workflows/python-ci.yml` — Ubuntu + Windows matrix, Python 3.11, `NRL_INFERENCE=stub`, builds the C engine, then runs scoped `ruff` + `mypy --strict` + `pytest` on the GGUF runner files as required gates, plus full-tree lint and full test suite as advisory (`continue-on-error`). Known pre-existing debt is listed in `docs/PRODUCTION_READINESS.md §5`.
+  - `docs/README.md` — documentation index pointing at the architecture doc, manifest v0/v1 specs, runner doc, immune-system spec, alive-language doc, prior-art, and production-readiness checklist, with a "phase status at a glance" table.
+  - `README.md` — new top-level **"Run a GGUF model"** section with one-shot, REPL, manifest, and backend-selector commands, the honesty-hinge note, and a pointer to `python -m nrlpy` for the native `nrl run <model>.gguf` case. CLI table gains rows for `nrlpy run`, `nrlpy chat`, and `nrlpy gguf`. Two CI badges added.
+  - `engine/src/main.c` — native `nrl run <model>.gguf` and bare `nrl <model>.gguf` now print an actionable hint directing users at `python -m nrlpy run|chat|gguf` and exit with code 2, instead of silently falling through to the INT4 lattice runner or to `print_usage`. Native C GGUF execution remains P4 (documented in `docs/nrl_gguf_runner_architecture.md §6`); the hint explicitly says so rather than shelling out to Python from C.
+  - `docs/PRODUCTION_READINESS.md` — CI section expanded with `python-ci.yml` coverage and a "known lint / test debt (not gating)" table naming the pre-existing files so the deferral is explicit and auditable.
+- **GGUF chat REPL (`nrlpy chat <model>.gguf`)** — multi-turn conversation on top of the P1 runner.
+  - `nrlpy.gguf_chat` module: `ChatSession`, `ChatMessage`, `SessionTps`, `chat_turn`, `run_gguf_chat_repl`, `save_session` / `load_session`, `build_history_prompt`.
+  - Per-turn muscle-memory: the rendered full-history prompt is the FNV-1a64 key, so identical `(system, history, user_text, sampler)` tuples hit the cache across sessions.
+  - Slash commands: `/help`, `/clear`, `/system <text>`, `/tps`, `/save <path>`, `/load <path>`, `/seed <n>`, `/history`, `/quit` / `/exit`.
+  - `/load` refuses snapshots recorded against a different `model_sha256` (no history poisoning across models).
+  - Chat templating for `none` / `chatml` / `phi3` / `llama2` renders the whole transcript; per-turn manifest forces `chat_format=none` so the runner doesn't double-wrap.
+  - Session banner keeps the four-metric TPS contract plus the explicit "virtual_tps == executed_tps until gate is active" honesty note; engine attestation and lattice observation are session-scoped (one probe at REPL start, not per turn).
+  - `nrlpy chat <model.gguf|manifest.nrl>` delegates from the existing rule-based `nrlpy chat` entry point to `gguf_chat.main_gguf_chat`; non-GGUF usage is unchanged.
+  - `nrlpy/tests/test_gguf_chat.py` — 17 tests covering history digest stability, per-format prompt rendering, per-turn state mutation, muscle-memory hit on repeated turn, session TPS aggregation, every slash command, REPL end-to-end via stub backend, and chat-main delegation.
+- **GGUF runner P1 (`llama.nrl`)** — NRL as execution supervisor for libllama numerics. Dense-only pass-through; L1 gating parses but is inactive until P2.
+  - `docs/nrl_gguf_runner_architecture.md` — three-plane architecture (L0 numerics / L1 gating / L2 orchestrator), four-metric TPS contract (`executed_tps` / `virtual_tps` / `cache_tps` / `effective_tps`), and phased gates (P1–P4).
+  - `language/spec/nrl_manifest_v1.md` — `.nrl` manifest v1 (backward-compatible extension of v0 via `schema = nrl.manifest.v1`). New keys for GGUF paths, sampler params, gate policies, muscle-memory, telemetry, benchmark class A/B, `kv_cache_dtype`, `no_repack`.
+  - `language/examples/phi3_dense.nrl` and `language/examples/phi3_omega_flex.nrl` reference manifests.
+  - `nrlpy.gguf` module: manifest parser, on-disk FNV-1a64-keyed muscle-memory cache, streaming four-metric TPS report, one-shot `nrl bench` attestation at startup, evidence logging via `nrl.gguf_run.v1` schema.
+  - `NRL_INFERENCE` backend selector: `native` (default, `llama-cpp-python`, in-process) / `cli` (spawn `llama-cli.exe` once, stream stdout) / `stub` (deterministic fake for CI).
+  - Host-tuning env vars: `NRL_KV_CACHE`, `NRL_NO_REPACK`, `NRL_CTX`, `NRL_LLAMA_CLI`, `NRL_STREAM_CHUNK_MS`, `NRL_ROOT`. Pacing when > 0 is labeled `paced=Xms (demo pacing, not native throughput)` in the banner.
+  - `_diagnose_bad_model` helper prints neighbouring `.gguf` files when `model = X.gguf` doesn't resolve.
+  - New CLI sugar: `nrlpy run <model>.gguf [--prompt "..." --max-tokens N --seed K --chat-format phi3 ...]`, `nrlpy <model>.gguf` (shorthand), `nrlpy gguf <manifest.nrl>`.
+  - `examples/nrl_run_gguf.py` — single clean reference run (replaces the `nrl_gguf_runner_v1`–`v5` experimental scripts).
+  - `nrlpy/tests/test_gguf.py` — 25 unit tests covering manifest parsing, muscle-memory roundtrip, TPS math, env-override precedence, stub-backend end-to-end, SHA-mismatch abort, bad-model diagnostics, and banner contract.
+  - `docs/PRIOR_ART.md` — cross-reference to `RomanAI-4D-GGUF-Engine` and `Ghost_Compressor` siblings; documents which patterns were ported (`NRL_STREAM_CHUNK_MS`, `NRL_INFERENCE=cli`, KV/repack knobs, bad-model diagnostics) and which were refused (100 MB-seed-as-compressed-70B claim, Ollama-stream-relabeled-as-NRL theatre).
+
+### Changed
+- **P2-Shadow landed**: advisory `NrlLatticeObservation` produced by a background `omega-hybrid` probe during every decode. Reported in a separate banner block labeled `NRL lattice observation (advisory; NOT applied to decode TPS until P2-Active)`. Never inflates `virtual_tps`.
+- `TpsReport.avg_layer_skip_ratio` → `gate_skip_ratio` (and `avg_kv_skip_ratio` → `gate_kv_skip_ratio`) to enforce the applied-vs-observed distinction at the type level. In P1 and P2-Shadow the applied values stay `0.0`, so `virtual_tps == executed_tps` on real runs; the banner prints this identity explicitly.
+- Banner restructured into three independent blocks — `decode TPS` / `NRL attestation (engine-sanity probe, not decode TPS)` / `NRL lattice observation (advisory)` — so metrics from different physical sources are never cross-cited.
+- `docs/nrl_gguf_runner_architecture.md` §1.0 adds the honesty hinge rule: *"until a gate actually elides libllama work, `virtual_tps == executed_tps`. The banner says so explicitly. No exception."*
+- `run_gguf` now always recomputes the model SHA-256 and asserts it against the declared `model_sha256` (previously trusted the declared value when present).
+
+### Fixed
+- `nrlpy.cli` typing: renamed shadowed `script`/`extra`/`p` bindings so `mypy --strict` passes on the full touched surface.
 - Initial architecture contract (`nrl-architecture.md`).
 - Initial legal and attribution files (`LICENSE`, `NOTICE`).
 - Bootstrap repository skeleton docs.

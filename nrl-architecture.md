@@ -1,3 +1,5 @@
+<!-- Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved. -->
+
 # NRL (Neural) — Architecture Specification
 
 Author: Daniel Harding, RomanAILabs · Co-architect: Codex (Cursor)  

@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
 /*
  * runtime_internal.h - internal runtime contracts.
  * Copyright RomanAILabs - Daniel Harding (GitHub RomanAILabs-Auth)

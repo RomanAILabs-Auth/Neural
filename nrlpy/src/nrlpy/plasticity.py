@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
 """Bounded plasticity controller stub (P4).
 
 Sovereign mode: all mutation APIs are logically disabled per immune spec §4.3.

@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
 <#
 .SYNOPSIS
   Full live-readiness gate: release_check + optional nrlpy pytest (if extension built).

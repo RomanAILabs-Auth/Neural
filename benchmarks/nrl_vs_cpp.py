@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
 """Locked NRL-vs-C++ benchmark harness for INT4 braincore.
 
 Builds C++ reference baselines (-O0 and -O3), runs native NRL profiles, and

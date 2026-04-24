@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
 [CmdletBinding()]
 param(
     [ValidateSet('Release','Debug')]
@@ -67,7 +68,10 @@ $sources = @(
     'engine\src\braincore_int4_avx2.c',
     'engine\src\zpm_int4_static.c',
     'engine\src\zpm_omega_router.c',
-    'engine\src\version.c'
+    'engine\src\version.c',
+    'engine\src\llama_bridge.c',
+    'engine\src\ladder_native.c',
+    'engine\src\ladder_full.c'
 )
 
 function Invoke-Cc {

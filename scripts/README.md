@@ -1,3 +1,5 @@
+<!-- Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved. -->
+
 # NRL scripts
 
 Automation entry points for build, install, benchmark-related release checks, and contributor sanity. Scripts preserve **deterministic defaults** and **explicit opt-in** for LM/AI and adaptive behavior.
@@ -12,6 +14,8 @@ Automation entry points for build, install, benchmark-related release checks, an
 | [`release_check.sh`](./release_check.sh) | POSIX | Equivalent release pipeline + JSON check when Python available |
 | [`live_readiness.ps1`](./live_readiness.ps1) | Windows | `release_check` + optional full `nrlpy` pytest when `_core*.pyd` exists |
 | [`live_readiness.sh`](./live_readiness.sh) | POSIX | Same pattern for `_core*.so` / `.pyd` |
+| [`live_readiness_gguf.ps1`](./live_readiness_gguf.ps1) | Windows | GGUF-runner gate: nrlpy import probe + `benchmarks/gguf_golden.py`. Modes: `stub` / `p2active-sim` (numeric-override simulation) / `p2active-prefill` (structural `PrefillGate`, 2-turn shared-prefix proof) / `real` (when `-Model` / `$env:NRL_GGUF_GOLDEN_MODEL` is set) / `auto`. Exit 0 / 1 / 2. |
+| [`live_readiness_gguf.sh`](./live_readiness_gguf.sh) | POSIX | Same, usage: `./scripts/live_readiness_gguf.sh [stub\|p2active-sim\|p2active-prefill\|real\|auto] [model.gguf]`. |
 
 Installers also set **`NRL_ROOT`**, copy `examples/` + `py/nrlpy/`, and add **`nrlpy.cmd`** (Windows) or **`nrlpy`** (POSIX) next to **`nrl`** so **`nrlpy script.py`** works like TriPy after a new shell / PATH reload.
 

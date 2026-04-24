@@ -1,3 +1,5 @@
+<!-- Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved. -->
+
 # NRL language
 
 The `.nrl` surface is the smallest deterministic control plane over the same engine profiles and kernels that `nrl` and `nrlpy` drive.

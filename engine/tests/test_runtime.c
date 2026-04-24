@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
 /*
  * test_runtime.c - sanity tests for runtime skeleton.
  * Copyright RomanAILabs - Daniel Harding (GitHub RomanAILabs-Auth)

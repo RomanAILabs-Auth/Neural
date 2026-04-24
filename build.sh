@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
 set -euo pipefail
 
 CONFIG="${1:-Release}"
@@ -36,6 +37,9 @@ SOURCES=(
   engine/src/zpm_int4_static.c
   engine/src/zpm_omega_router.c
   engine/src/version.c
+  engine/src/llama_bridge.c
+  engine/src/ladder_native.c
+  engine/src/ladder_full.c
 )
 
 OBJS=()

@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
 """Seamless assimilated helpers injected into ``nrlpy``-launched scripts.
 
 When you run ``nrlpy yourscript.py``, :func:`nrlpy.compat.llm_globals` merges these

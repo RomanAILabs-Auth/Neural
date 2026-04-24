@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
 /*
  * dispatch.c - kernel variant binding for NRL runtime.
  * Copyright RomanAILabs - Daniel Harding (GitHub RomanAILabs-Auth)

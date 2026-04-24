@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
 """Type stubs for nrlpy._core."""
 
 from __future__ import annotations

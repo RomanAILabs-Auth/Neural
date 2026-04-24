@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
 """Canonical workload identity for harnesses and specialization keys.
 
 Implements ``nrl.workload_descriptor.v1`` (see ``docs/schemas/workload_descriptor_v1.schema.json``).

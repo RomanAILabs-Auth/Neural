@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
 # Portable copy of language/examples/aes256.nrl (install tree).
 
 mode=bench

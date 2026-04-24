@@ -1,3 +1,5 @@
+<!-- Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved. -->
+
 # .nrl Minimal Spec v0
 
 This is a key-value control surface for deterministic runtime execution.

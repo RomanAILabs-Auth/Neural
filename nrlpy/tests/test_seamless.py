@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
 """Tests for seamless assimilated builtins."""
 
 from __future__ import annotations

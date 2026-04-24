@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
 """English-friendly control-plane chat (status, telemetry, evidence tail).
 
 This is **not** a claim of agency or consciousness. It maps short natural-language
@@ -294,8 +295,18 @@ def run_chat_loop(stream_in: Any = None, stream_out: Any = None) -> int:
 
 
 def main_chat(argv: Sequence[str] | None = None) -> int:
-    """Interactive REPL, or one-shot: ``nrlpy chat --one \"version\"``."""
+    """Interactive REPL, or one-shot: ``nrlpy chat --one \"version\"``.
+
+    If the first arg is a ``.gguf`` model file or a ``.nrl`` manifest, route to
+    the GGUF chat REPL in :mod:`nrlpy.gguf_chat` instead of the rule-based one.
+    """
     args = list(argv) if argv is not None else sys.argv[2:]
+    if args and (
+        args[0].lower().endswith(".gguf") or args[0].lower().endswith(".nrl")
+    ):
+        from .gguf_chat import main_gguf_chat
+
+        return main_gguf_chat(args)
     if args and args[0] == "--one" and len(args) >= 2:
         print(interpret(" ".join(args[1:])))
         return 0

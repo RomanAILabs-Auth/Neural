@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
 """
 Smallest prime strictly greater than one trillion.
 

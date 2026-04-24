@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
 # Live readiness: release_check.sh + nrlpy pytest when _core is present.
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

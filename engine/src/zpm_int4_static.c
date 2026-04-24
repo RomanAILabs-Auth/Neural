@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
 /*
  * zpm_int4_static.c - exact static-input accelerator for INT4 braincore.
  * Copyright RomanAILabs - Daniel Harding (GitHub RomanAILabs-Auth)

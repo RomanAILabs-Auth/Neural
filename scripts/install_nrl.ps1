@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
 [CmdletBinding()]
 param(
     [switch]$OptInLMAI,
@@ -73,6 +74,9 @@ if ($LASTEXITCODE -ge 8) {
 }
 [Environment]::SetEnvironmentVariable("NRL_ROOT", $installRoot, "User")
 $env:NRL_ROOT = $installRoot
+# Source clone path so ``nrlpy wps-gate`` / benchmarks work from any cwd (not only repo dir).
+[Environment]::SetEnvironmentVariable("NRL_REPO", $root, "User")
+$env:NRL_REPO = $root
 
 if (-not $NoPathUpdate) {
     $currentPath = [Environment]::GetEnvironmentVariable("Path", "User")
@@ -115,5 +119,8 @@ Write-Host "[install] complete" -ForegroundColor Green
 Write-Host "  binary:  $(Join-Path $binDir 'nrl.exe')" -ForegroundColor DarkGray
 Write-Host "  consent: $consentPath" -ForegroundColor DarkGray
 Write-Host "  lm_ai_opt_in: $enableLMAI" -ForegroundColor DarkGray
+Write-Host "  health:  nrlpy doctor" -ForegroundColor DarkGray
+Write-Host "  quick:   nrlpy absorb <model.gguf>; nrlpy chat <model.gguf> --rewired" -ForegroundColor DarkGray
 Write-Host "  NRL_ROOT: $installRoot (examples + py/nrlpy for ``nrl demo``)" -ForegroundColor DarkGray
+Write-Host "  NRL_REPO: $root (git clone -- ``nrlpy wps-gate`` from any folder)" -ForegroundColor DarkGray
 Write-Host "  nrlpy:     $(Join-Path $binDir 'nrlpy.cmd') (open a new terminal, then ``nrlpy script.py``)" -ForegroundColor DarkGray

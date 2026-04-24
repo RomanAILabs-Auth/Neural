@@ -1,0 +1,35 @@
+Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
+
+RomanAILabs Proprietary License Notice
+=====================================
+
+NRL and the Bio-Digital Brain are not released as permissive open-source
+software. Daniel Harding / RomanAILabs retain full intellectual property rights
+in the NRL engine, NrlPy driver, Bio-Digital Brain architecture, examples,
+documentation, tests, and related materials.
+
+The project is published so researchers, students, and individual developers can
+read, inspect, and run the work locally for evaluation under the RomanAILabs
+Proprietary Source-Available Evaluation License 1.0. That license does not
+permit redistribution, public forks for redistribution, derivative products,
+commercial use, hosted use, AI training, competing use, or reimplementation of
+the protected architecture without written permission.
+
+Plain-language summary:
+
+- You may read, inspect, and run one local copy for personal evaluation.
+- You may not redistribute, publish, sublicense, host, sell, or package the work.
+- You may not use it to build, validate, benchmark, or operate a competing
+  neural runtime, low-bit compute fabric, model-memory service, hosted inference
+  service, derivative service, or substantially similar architecture.
+- You may not use the repository contents for AI training, fine-tuning,
+  retrieval, code generation, or benchmark datasets.
+- Commercial, enterprise, investor diligence, internal company use, production
+  use, and patent permissions require a separate written agreement.
+- Contributions are accepted only under the ownership/assignment terms in
+  CONTRIBUTING.md.
+- The full legal terms are in ../LICENSE and control over this notice.
+
+Commercial licensing contact:
+
+daniel@romanailabs.com

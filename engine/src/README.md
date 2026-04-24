@@ -1,3 +1,5 @@
+<!-- Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved. -->
+
 # `engine/src`
 
 Implementation of the NRL native engine: dispatch, CPU id, public C ABI, INT4 kernels (scalar and AVX2), ZPM static transition collapse, Omega fractal routing, CLI, and versioning.

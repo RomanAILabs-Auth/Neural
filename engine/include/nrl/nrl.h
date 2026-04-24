@@ -1,3 +1,4 @@
+// Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
 /*
  * nrl.h - NRL Engine v1 Public C ABI
  * Copyright RomanAILabs - Daniel Harding (GitHub RomanAILabs-Auth)

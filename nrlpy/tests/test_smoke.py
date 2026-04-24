@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
 """nrlpy smoke tests."""
 
 from __future__ import annotations

@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
 """High-level Python API over machine-code NRL kernels.
 
 Use this module when you want explicit, typed calls. For LLM-style scripts that

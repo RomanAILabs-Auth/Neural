@@ -1,0 +1,303 @@
+Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
+
+==============================================================================
+NRL Phase 11 ù R2 Omega n-gram rescue benchmark
+  seeds                   : 20
+  rephrased queries       : 63
+  overlap threshold       : 0.30
+------------------------------------------------------------------------------
+  served_total            : 47 of 63  (74.6% served share)
+  ngram_rescued_total     : 47 of 47  (100.0% of served via rescue)
+  overlap min/p50/max     : 0.31 / 0.43 / 0.75
+==============================================================================
+
+Per-query audit (query -> matched prompt_head -> reply head):
+------------------------------------------------------------------------------
+  [RESCUED] query="what's R2 Omega again?"
+    -> prompt_head='What is R2 Omega Native Resolve?'
+    -> reply_head ='R2 is the rung between R1 ZPM and R5 full decode. It runs a bounded Omega probe over the LMO router graph, folds the sub'
+    -> overlap=0.33  distance=122b
+
+  [RESCUED] query='tell me about R2 omega native resolve'
+    -> prompt_head='What is R2 Omega Native Resolve?'
+    -> reply_head ='R2 is the rung between R1 ZPM and R5 full decode. It runs a bounded Omega probe over the LMO router graph, folds the sub'
+    -> overlap=0.52  distance=140b
+
+  [RESCUED] query='how does R2 omega resolve work?'
+    -> prompt_head='What is R2 Omega Native Resolve?'
+    -> reply_head ='R2 is the rung between R1 ZPM and R5 full decode. It runs a bounded Omega probe over the LMO router graph, folds the sub'
+    -> overlap=0.39  distance=125b
+
+  [RESCUED] query='explain R2 omega native resolve in one paragraph'
+    -> prompt_head='What is R2 Omega Native Resolve?'
+    -> reply_head ='R2 is the rung between R1 ZPM and R5 full decode. It runs a bounded Omega probe over the LMO router graph, folds the sub'
+    -> overlap=0.43  distance=117b
+
+  [RESCUED] query='what is zpm_threshold_bits?'
+    -> prompt_head='What does zpm_threshold_bits control?'
+    -> reply_head ='zpm_threshold_bits is the Hamming tolerance for ZPM near-match lookups. distance_bits=0 is an exact hit; 0<distance<=thr'
+    -> overlap=0.57  distance=130b
+
+  [RESCUED] query='how does the zpm threshold bits setting work?'
+    -> prompt_head='What does zpm_threshold_bits control?'
+    -> reply_head ='zpm_threshold_bits is the Hamming tolerance for ZPM near-match lookups. distance_bits=0 is an exact hit; 0<distance<=thr'
+    -> overlap=0.42  distance=123b
+
+  [RESCUED] query='explain zpm threshold bits'
+    -> prompt_head='What does zpm_threshold_bits control?'
+    -> reply_head ='zpm_threshold_bits is the Hamming tolerance for ZPM near-match lookups. distance_bits=0 is an exact hit; 0<distance<=thr'
+    -> overlap=0.41  distance=132b
+
+  [RESCUED] query='what does the zpm_threshold_bits knob do'
+    -> prompt_head='What does zpm_threshold_bits control?'
+    -> reply_head ='zpm_threshold_bits is the Hamming tolerance for ZPM near-match lookups. distance_bits=0 is an exact hit; 0<distance<=thr'
+    -> overlap=0.59  distance=130b
+
+  [RESCUED] query='how is Cl(4,0) used in zpm verify?'
+    -> prompt_head='How does Cl(4,0) rotor fit into ZPM verify?'
+    -> reply_head ='The rotor is a Clifford Cl(4,0) sandwich product with a scalar s and bivectors b_xy, b_xz, b_xw. zpm.verify() computes t'
+    -> overlap=0.38  distance=129b
+
+  [DEMOTED] query="what's the role of the clifford rotor in verify?"
+    -> demoted reasons: zpm_no_match, ngram_rescue_no_match
+
+  [RESCUED] query='explain cl 4 0 rotor and zpm verify'
+    -> prompt_head='How does Cl(4,0) rotor fit into ZPM verify?'
+    -> reply_head ='The rotor is a Clifford Cl(4,0) sandwich product with a scalar s and bivectors b_xy, b_xz, b_xw. zpm.verify() computes t'
+    -> overlap=0.41  distance=132b
+
+  [RESCUED] query='what are the rungs of the resolution ladder?'
+    -> prompt_head='What is the Resolution Ladder?'
+    -> reply_head ='The Resolution Ladder is the ordered cascade the runner dispatches each turn through: R0 Muscle Memory, R1 ZPM nullspace'
+    -> overlap=0.56  distance=117b
+
+  [RESCUED] query='tell me about the NRL resolution ladder'
+    -> prompt_head='What is the Resolution Ladder?'
+    -> reply_head ='The Resolution Ladder is the ordered cascade the runner dispatches each turn through: R0 Muscle Memory, R1 ZPM nullspace'
+    -> overlap=0.42  distance=123b
+
+  [RESCUED] query='explain the resolution ladder'
+    -> prompt_head='What is the Resolution Ladder?'
+    -> reply_head ='The Resolution Ladder is the ordered cascade the runner dispatches each turn through: R0 Muscle Memory, R1 ZPM nullspace'
+    -> overlap=0.59  distance=128b
+
+  [RESCUED] query="what's the R0 through R5 ladder?"
+    -> prompt_head='What is the Resolution Ladder?'
+    -> reply_head ='The Resolution Ladder is the ordered cascade the runner dispatches each turn through: R0 Muscle Memory, R1 ZPM nullspace'
+    -> overlap=0.31  distance=131b
+
+  [RESCUED] query='explain muscle memory caching'
+    -> prompt_head='What is Muscle Memory (R0)?'
+    -> reply_head ='R0 Muscle Memory is a byte-identical replay cache keyed by FNV-1a64 over the rendered prompt bundle. On a hit the runner'
+    -> overlap=0.36  distance=137b
+
+  [RESCUED] query='how does R0 muscle memory work?'
+    -> prompt_head='What is Muscle Memory (R0)?'
+    -> reply_head ='R0 Muscle Memory is a byte-identical replay cache keyed by FNV-1a64 over the rendered prompt bundle. On a hit the runner'
+    -> overlap=0.39  distance=141b
+
+  [RESCUED] query="what's the muscle memory rung?"
+    -> prompt_head='What is Muscle Memory (R0)?'
+    -> reply_head ='R0 Muscle Memory is a byte-identical replay cache keyed by FNV-1a64 over the rendered prompt bundle. On a hit the runner'
+    -> overlap=0.55  distance=134b
+
+  [RESCUED] query='what is max-throughput coherence lane?'
+    -> prompt_head='What does coherence_lane=max-throughput do?'
+    -> reply_head ='max-throughput enables R2 Omega Native Resolve as an active token-serving rung. On fast-stable R2 is hard-locked to shad'
+    -> overlap=0.70  distance=131b
+
+  [RESCUED] query='how does coherence_lane max throughput behave?'
+    -> prompt_head='What does coherence_lane=max-throughput do?'
+    -> reply_head ='max-throughput enables R2 Omega Native Resolve as an active token-serving rung. On fast-stable R2 is hard-locked to shad'
+    -> overlap=0.72  distance=125b
+
+  [RESCUED] query='explain the max throughput lane'
+    -> prompt_head='What does coherence_lane=max-throughput do?'
+    -> reply_head ='max-throughput enables R2 Omega Native Resolve as an active token-serving rung. On fast-stable R2 is hard-locked to shad'
+    -> overlap=0.38  distance=125b
+
+  [DEMOTED] query='how does gguf absorption work?'
+    -> demoted reasons: zpm_no_match, ngram_rescue_no_match
+
+  [DEMOTED] query='explain absorb_gguf'
+    -> demoted reasons: zpm_no_match, ngram_rescue_no_match
+
+  [DEMOTED] query='what do stages A-I through A-VI do?'
+    -> demoted reasons: zpm_no_match, ngram_rescue_no_match
+
+  [RESCUED] query='what is the zpm nullspace?'
+    -> prompt_head='What is ZPM nullspace?'
+    -> reply_head ='The nullspace is the set of stored unity states. Lookup XORs the query State against every stored state and picks the mi'
+    -> overlap=0.75  distance=131b
+
+  [RESCUED] query='how does zpm nullspace lookup work?'
+    -> prompt_head='What is ZPM nullspace?'
+    -> reply_head ='The nullspace is the set of stored unity states. Lookup XORs the query State against every stored state and picks the mi'
+    -> overlap=0.34  distance=126b
+
+  [RESCUED] query='explain zpm nullspace'
+    -> prompt_head='What is ZPM nullspace?'
+    -> reply_head ='The nullspace is the set of stored unity states. Lookup XORs the query State against every stored state and picks the mi'
+    -> overlap=0.46  distance=117b
+
+  [DEMOTED] query='how is the zpm state computed?'
+    -> demoted reasons: zpm_no_match, ngram_rescue_no_match
+
+  [RESCUED] query="what's the 4xu64 state?"
+    -> prompt_head='What is the 256-bit State?'
+    -> reply_head ='A ZPM State is four uint64 words = 256 bits, produced by zpm.anchor() via four rotated FNV-1a64 passes over the turn bun'
+    -> overlap=0.39  distance=120b
+
+  [RESCUED] query='explain the 256 bit state'
+    -> prompt_head='What is the 256-bit State?'
+    -> reply_head ='A ZPM State is four uint64 words = 256 bits, produced by zpm.anchor() via four rotated FNV-1a64 passes over the turn bun'
+    -> overlap=0.53  distance=126b
+
+  [RESCUED] query='explain zpm inversion'
+    -> prompt_head='What does inversion do in zpm.py?'
+    -> reply_head ='inversion() is Stage II of the ZPM pipeline: GF(2) row parity where rows[i] = t[i] ^ (t[i] << 1) ^ 0x9E3779B97F4A7C15. I'
+    -> overlap=0.38  distance=135b
+
+  [RESCUED] query='what is the inversion step?'
+    -> prompt_head='What is the Resolution Ladder?'
+    -> reply_head ='The Resolution Ladder is the ordered cascade the runner dispatches each turn through: R0 Muscle Memory, R1 ZPM nullspace'
+    -> overlap=0.31  distance=140b
+
+  [DEMOTED] query='how does gf 2 row parity work in zpm?'
+    -> demoted reasons: zpm_no_match, ngram_rescue_no_match
+
+  [RESCUED] query='why does the rescue skip bit symmetry?'
+    -> prompt_head='Why does Stage-VI skip bit-symmetry for rescued entries?'
+    -> reply_head ="By construction, an n-gram-rescued entry has stored_state != candidate_state (that's why the primary lookup missed). zpm"
+    -> overlap=0.47  distance=125b
+
+  [DEMOTED] query='how does ngram rescue stage-vi work?'
+    -> demoted reasons: zpm_no_match, ngram_rescue_no_match
+
+  [RESCUED] query='explain stage vi for rescued entries'
+    -> prompt_head='Why does Stage-VI skip bit-symmetry for rescued entries?'
+    -> reply_head ="By construction, an n-gram-rescued entry has stored_state != candidate_state (that's why the primary lookup missed). zpm"
+    -> overlap=0.43  distance=124b
+
+  [RESCUED] query='what does --rewired do?'
+    -> prompt_head='What does the rewired footer show?'
+    -> reply_head ='Each turn prints a one-line footer with the badge ([Instant Map] for R2 exact, [Omega Rescue] for R2 n-gram rescue with '
+    -> overlap=0.45  distance=136b
+
+  [RESCUED] query='explain rewired chat mode'
+    -> prompt_head='What is the rewired mode?'
+    -> reply_head ='--rewired disables seed-corpus prewarming and tunes the rewired manifest: runner_backend=native_full, coherence_lane=max'
+    -> overlap=0.36  distance=117b
+
+  [DEMOTED] query='how is rewired different from fast-chat?'
+    -> demoted reasons: zpm_no_match, ngram_rescue_no_match
+
+  [RESCUED] query='how does the omega probe work?'
+    -> prompt_head='What is the Omega probe?'
+    -> reply_head ='The Omega probe projects the intent anchor onto every sub-lattice in the LMO router graph, runs a bounded evolution (inv'
+    -> overlap=0.45  distance=123b
+
+  [RESCUED] query='explain the omega native probe'
+    -> prompt_head='What is the Omega probe?'
+    -> reply_head ='The Omega probe projects the intent anchor onto every sub-lattice in the LMO router graph, runs a bounded evolution (inv'
+    -> overlap=0.36  distance=122b
+
+  [RESCUED] query='what does _run_omega_probe do?'
+    -> prompt_head='What is the Omega probe?'
+    -> reply_head ='The Omega probe projects the intent anchor onto every sub-lattice in the LMO router graph, runs a bounded evolution (inv'
+    -> overlap=0.39  distance=135b
+
+  [RESCUED] query='what is omega_budget_ms?'
+    -> prompt_head='What does omega_budget_ms control?'
+    -> reply_head ='omega_budget_ms bounds the wall-clock time R2 spends on the Omega probe per turn. When exceeded, the probe stops early a'
+    -> overlap=0.53  distance=129b
+
+  [RESCUED] query='how does the omega budget work?'
+    -> prompt_head='What does omega_budget_ms control?'
+    -> reply_head ='omega_budget_ms bounds the wall-clock time R2 spends on the Omega probe per turn. When exceeded, the probe stops early a'
+    -> overlap=0.37  distance=121b
+
+  [DEMOTED] query='explain omega budget milliseconds'
+    -> demoted reasons: zpm_no_match, ngram_rescue_no_match
+
+  [RESCUED] query='explain effective wps'
+    -> prompt_head='What is effective_wps?'
+    -> reply_head ='effective_wps = total_words / wall_clock_s including cache-served turns. It is distinct from executed_wps (novel decode '
+    -> overlap=0.46  distance=125b
+
+  [RESCUED] query='how is effective_wps computed?'
+    -> prompt_head='What is effective_wps?'
+    -> reply_head ='effective_wps = total_words / wall_clock_s including cache-served turns. It is distinct from executed_wps (novel decode '
+    -> overlap=0.48  distance=127b
+
+  [DEMOTED] query="what's the difference between effective wps and executed wps?"
+    -> demoted reasons: zpm_no_match, ngram_rescue_no_match
+
+  [RESCUED] query='what is prompt_head?'
+    -> prompt_head='What does prompt_head metadata do in ZPM?'
+    -> reply_head ='prompt_head is the first 256 bytes of the prompt that produced a ZPM entry, stamped by R5 writeback. The n-gram rescue p'
+    -> overlap=0.35  distance=152b
+
+  [RESCUED] query='how does zpm prompt_head metadata work?'
+    -> prompt_head='What does prompt_head metadata do in ZPM?'
+    -> reply_head ='prompt_head is the first 256 bytes of the prompt that produced a ZPM entry, stamped by R5 writeback. The n-gram rescue p'
+    -> overlap=0.55  distance=127b
+
+  [DEMOTED] query='explain the prompt head field'
+    -> demoted reasons: zpm_no_match, ngram_rescue_no_match
+
+  [RESCUED] query='explain native full backend'
+    -> prompt_head='What is the native_full backend?'
+    -> reply_head ='native_full moves R0, R1, and R2 candidate generation into native C code. R5 stays behind a Python callback bridge to li'
+    -> overlap=0.50  distance=139b
+
+  [RESCUED] query='what does runner_backend=native_full do?'
+    -> prompt_head='What is the native_full backend?'
+    -> reply_head ='native_full moves R0, R1, and R2 candidate generation into native C code. R5 stays behind a Python callback bridge to li'
+    -> overlap=0.44  distance=126b
+
+  [RESCUED] query='how does the native full hot path work?'
+    -> prompt_head='What is the native_full backend?'
+    -> reply_head ='native_full moves R0, R1, and R2 candidate generation into native C code. R5 stays behind a Python callback bridge to li'
+    -> overlap=0.33  distance=140b
+
+  [RESCUED] query='how does muscle memory keying work?'
+    -> prompt_head='How are muscle memory keys derived?'
+    -> reply_head ='_muscle_memory_key hashes the rendered prompt bundle with FNV-1a64. The bundle is model_sha|system|history|user|sampler,'
+    -> overlap=0.40  distance=141b
+
+  [RESCUED] query='what hash does muscle memory use?'
+    -> prompt_head='What is Muscle Memory (R0)?'
+    -> reply_head ='R0 Muscle Memory is a byte-identical replay cache keyed by FNV-1a64 over the rendered prompt bundle. On a hit the runner'
+    -> overlap=0.49  distance=120b
+
+  [DEMOTED] query='explain the mm key derivation'
+    -> demoted reasons: zpm_no_match, ngram_rescue_no_match
+
+  [DEMOTED] query="what's in the chat turn footer?"
+    -> demoted reasons: zpm_no_match, ngram_rescue_no_match
+
+  [RESCUED] query='explain the rewired footer badges'
+    -> prompt_head='What does the rewired footer show?'
+    -> reply_head ='Each turn prints a one-line footer with the badge ([Instant Map] for R2 exact, [Omega Rescue] for R2 n-gram rescue with '
+    -> overlap=0.41  distance=139b
+
+  [DEMOTED] query='how to read the footer output'
+    -> demoted reasons: zpm_no_match, ngram_rescue_no_match
+
+  [RESCUED] query='what does ngram rescue guarantee?'
+    -> prompt_head='What coherence guarantee does ngram rescue provide?'
+    -> reply_head ='N-gram rescue is surface-overlap-gated near-match service. The overlap threshold (char-3-gram Jaccard >= 0.30) gates adm'
+    -> overlap=0.59  distance=129b
+
+  [DEMOTED] query='how does rescue stay coherent?'
+    -> demoted reasons: zpm_no_match, ngram_rescue_no_match
+
+  [DEMOTED] query="what's the coherence contract on rescued turns?"
+    -> demoted reasons: zpm_no_match, ngram_rescue_no_match
+
+==============================================================================
+
+  wall_clock_s            : 0.114
+  nrl_root (isolated)     : C:\Users\Asus\AppData\Local\Temp\nrl_r2_rescue_bench__i71bekt
+  model_path              : C:\Users\Asus\AppData\Local\Temp\nrl_r2_rescue_bench__i71bekt\fixture.gguf

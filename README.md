@@ -1,14 +1,152 @@
-# NRL (Neural)
+<!-- Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved. -->
 
-[![License: RBSL 1.1](https://img.shields.io/badge/license-RBSL%201.1-111827.svg)](./LICENSE)
+# NRL Bio-Digital Brain
+
+**Disk-native lattice memory for local GGUF models: absorb once, chat, recover, dream, and prune safely.**
+
+[![License: Proprietary Source-Available](https://img.shields.io/badge/license-Proprietary%20Source--Available-111827.svg)](./LICENSE)
 [![Python](https://img.shields.io/badge/python-3.9%2B-3776AB.svg?logo=python&logoColor=white)](./nrlpy/pyproject.toml)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-0A0A0A.svg)](./README.md#quick-start)
+[![Bio-Digital Brain](https://img.shields.io/badge/Bio--Digital%20Brain%20v3.0-MVP%20Complete-16A34A.svg)](./AUDIT_REPORT.md)
+[![engine-ci](https://github.com/RomanAILabs-Auth/NRL/actions/workflows/engine-ci.yml/badge.svg)](./.github/workflows/engine-ci.yml)
+[![python-ci](https://github.com/RomanAILabs-Auth/NRL/actions/workflows/python-ci.yml/badge.svg)](./.github/workflows/python-ci.yml)
 
-**NRL** is a CPU-first stack for **packed INT4 lattice dynamics**: scalar reference and AVX2 hot paths, load-time dispatch, and multiple **execution profiles** that trade **fully materialized neuron updates** against **pruned or collapsed schedules** while preserving defined accounting invariants (`executed_updates`, `baseline_equiv_updates`, `skip_ratio`, `virtual_gops`). **NrlPy** exposes the same ABI and native CLI bridges from Python. **`.nrl` v0** is a minimal key-value control format for reproducible bench and run invocations.
+**NRL** is a CPU-first stack for **packed INT4 lattice dynamics** plus a
+disk-native **Bio-Digital Brain MVP v3.0** lifecycle: GGUF absorption into LMO,
+chat through a resolution ladder, idle-time Drift Conqueror mapping, WAL-backed
+ZPM recovery, quota pruning, and final health diagnostics.
 
 Copyright (c) RomanAILabs — Daniel Harding (GitHub: RomanAILabs-Auth)  
 Collaborators: Grok/xAI, Gemini-Flash/Google, ChatGPT-5.4/OpenAI, Cursor  
 Contact: `daniel@romanailabs.com` · `romanailabs@gmail.com` · `romanailabs.com`
+
+**License notice:** This software is **NOT open source**. It is released under
+the **RomanAILabs Proprietary Source-Available Evaluation License 1.0**.
+Evaluation is limited to reading, inspecting, and running one local copy.
+Commercial, redistribution, derivative, hosted, AI-training, and competing use
+requires a separate written license from RomanAILabs. Full intellectual
+property rights are retained by Daniel Harding / RomanAILabs.
+
+---
+
+## Bio-Digital Brain MVP v3.0
+
+The **Bio-Digital Brain** is the disk-native GGUF/LMO lifecycle in this repo:
+absorb a model once, chat through the resolution ladder, let Learn Mode map weak
+ZPM regions while idle, recover through WAL/snapshots after interruption, and
+keep the on-disk footprint bounded with quota pruning.
+
+Phases **P1-P10 are complete and release-ready**:
+
+| Phase | Status | Operator Surface |
+|-------|--------|------------------|
+| P1 | LMO absorption | `nrlpy absorb <model.gguf>` |
+| P2 | Learn Daemon | `NRL_LEARN_MODE=1` |
+| P3 | Chat + learning UX | `nrlpy chat <model.gguf> --rewired` |
+| P4 | ZPM WAL + recovery | `nrlpy lmo info <model-or-sha>` |
+| P5 | Drift Conqueror coverage | `nrlpy lmo coverage <model-or-sha>` |
+| P6 | HD quota + prune | `nrlpy lmo prune <model-or-sha> --dry-run` |
+| P7 | Final integration + doctor | `nrlpy doctor` |
+| P8 | GitHub release prep | `docs/FUTURE_PHASES.md`, examples, templates |
+| P9 | Proprietary license lock | `LICENSE`, `LICENSES/NOTICE` |
+| P10 | Final architecture audit | `AUDIT_REPORT.md`, `RELEASE_CHECKLIST.md` |
+
+## Quick Start
+
+```powershell
+git clone https://github.com/RomanAILabs-Auth/NRL.git
+cd NRL\nrlpy
+python -m pip install -e .; python -m nrlpy doctor
+```
+
+Then absorb and chat with a local GGUF:
+
+```powershell
+nrlpy absorb C:\models\Phi-3-mini-4k-instruct.Q4_K_M.gguf
+nrlpy chat C:\models\Phi-3-mini-4k-instruct.Q4_K_M.gguf --rewired
+```
+
+If `nrlpy` is not on PATH yet, run `python -m pip install -e .` from `NRL\nrlpy`
+or use `python -m nrlpy doctor`.
+
+## Architecture
+
+The v3.0 architecture is a disk-native lifecycle around a local GGUF: absorb
+once into an LMO, serve conversation through the Resolution Ladder, grow ZPM
+coverage during idle Learn Mode, recover state through WAL/snapshots, and keep
+storage bounded through quota-aware pruning. P10 confirms these surfaces are
+integrated, documented, and ready for GitHub release under the proprietary
+source-available evaluation license.
+
+```text
+GGUF model
+   |
+   v
+P1 absorb -> LMO on disk (header, tiles, retained blobs, router)
+   |
+   +--> P3 chat resolution ladder
+   |       R0 muscle memory -> R1 ZPM -> R2 Omega -> R5 decode
+   |
+   +--> P2/P5 Learn Daemon + Drift Conqueror
+   |       idle weak-bucket micro-queries -> bounded ZPM growth
+   |
+   +--> P4 WAL + snapshots
+   |       crash recovery for ZPM index
+   |
+   +--> P6 Disk Manager
+           quota, dry-run prune, LRU ZPM eviction, WAL compaction
+```
+
+Let the brain map weak ZPM regions while the machine is idle:
+
+```powershell
+$env:NRL_LEARN_MODE = "1"
+$env:NRL_LEARN_CONQUEST_IDLE_SEC = "300"
+$env:NRL_LMO_MAX_GB = "100"
+nrlpy lmo coverage <sha-prefix>
+nrlpy lmo info <sha-prefix>
+nrlpy lmo prune <sha-prefix> --dry-run
+```
+
+Safety switches:
+
+| Variable | Effect |
+|----------|--------|
+| `NRL_SAFE_MODE=1` | Disables background Learn Mode, WAL writes, and auto-prune hooks. |
+| `NRL_LEARN_MODE=0` | Keeps the learn supervisor idle. |
+| `NRL_LMO_MAX_GB=100` | Per-model LMO+ZPM+muscle-memory footprint cap. |
+| `NRL_LMO_AUTO_PRUNE=1` | Optional post-persist quota check; off by default. |
+
+See [`docs/GETTING_STARTED.md`](./docs/GETTING_STARTED.md) for a step-by-step
+absorb -> chat -> overnight dream -> coverage workflow.
+
+## What's Next
+
+The MVP is complete. Future work starts from the P7-P10 roadmap rather than
+changing the v3.0 release surface: tighten lifecycle diagnostics, add release
+artifact signing, expand operator UX around coverage/pruning, and plan post-MVP
+multi-model or distributed Learn Mode work in [`docs/FUTURE_PHASES.md`](./docs/FUTURE_PHASES.md).
+
+Release operators should review [`AUDIT_REPORT.md`](./AUDIT_REPORT.md),
+[`RELEASE_CHECKLIST.md`](./RELEASE_CHECKLIST.md), and
+[`RELEASE_NOTES_v3.0.md`](./RELEASE_NOTES_v3.0.md) before tagging.
+
+## Safety Disclaimer
+
+NRL is local-first research software. It does not replace model safety,
+red-team review, sandboxing, backups, or human approval for sensitive use. Keep
+`NRL_SAFE_MODE=1` when you want background learning, WAL writes, and auto-prune
+hooks disabled. Do not run untrusted GGUFs or scripts outside a sandbox.
+
+## License
+
+This software is **NOT open source**. It is released under the
+**RomanAILabs Proprietary Source-Available Evaluation License 1.0**. You may
+read, inspect, and run one local copy for personal evaluation only. Commercial,
+redistribution, derivative, hosted, AI-training, enterprise, and competing use
+requires a separate written agreement from RomanAILabs. Full intellectual
+property rights are retained by Daniel Harding / RomanAILabs. Model files,
+datasets, and third-party dependencies remain governed by their own licenses.
 
 ---
 
@@ -106,6 +244,120 @@ nrl bench <neurons> <iterations> <reps> <threshold> <profile>
 ### Runtime snapshot
 
 `nrl brain-map` runs one short INT4 bench probe, prints RSS, and a fixed **`PORT_*`** status table for quick inspection (not a multi-configuration sweep).
+
+---
+
+## NRL-AI: pure-lattice inference (≥1000 wps, no GPU, no libllama)
+
+`NRL-AI` is the **native** path: a retrieval + associative-composition engine that runs entirely on NRL primitives (SimHash anchors, ZPM transition collapse, Omega fragment routing). No GPU. No CUDA. No libllama decode. Every reply is served by a replay-locked lattice walk against a corpus you ingest once.
+
+**Throughput contract.** Bench gate = mean **words per second** ≥ `NRL_AI_WPS_TARGET` (default **1000**). On a reference laptop (AMD64, 8 cores, Windows 11) the bench lands at **~5,900 wps mean / ~10,000 wps peak**, gate `PASS` — see `nrl-ai bench` below.
+
+### Out-of-box demo
+
+```powershell
+python -m nrlpy nrl-ai demo
+```
+
+Compiles the packaged seed corpus (conversational Q&A about NRL-AI itself) into a demo index and launches the polished chat REPL. No user corpus required.
+
+### The seven commands
+
+| Command | Purpose |
+|---------|---------|
+| `nrl-ai ingest <corpus.txt>` | Build an on-disk index: fragments + 256-bit SimHash anchors + Omega transitions + manifest. |
+| `nrl-ai resolve "<query>"`   | Anchor a query and find the closest fragment by Hamming distance. JSON on stdout. |
+| `nrl-ai compose "<query>"`   | Resolve + Omega-routed fragment walk → streamed reply. JSON on stdout. |
+| `nrl-ai chat`                | Polished REPL. `[NRL-AI]` fast lane only. Streaming output. Slash commands: `/help /stats /reset /status /quit`. |
+| `nrl-ai bench`               | Replay-locked WPS gate. Emits `schema=nrl_ai.bench.v1` JSON. Exit code 0 on PASS, 4 on FAIL, 2 on missing index. |
+| `nrl-ai status`              | Roadmap + index readiness JSON. |
+| `nrl-ai demo`                | One-shot: ingest seed corpus → chat REPL. |
+
+### Typical flow
+
+```powershell
+python -m nrlpy nrl-ai ingest my_corpus.txt --out .\idx
+python -m nrlpy nrl-ai bench  --index .\idx --turns 32 --warmup 2
+python -m nrlpy nrl-ai chat   --index .\idx
+```
+
+### Contracts at a glance
+
+- **Deterministic.** Same corpus + same query → bit-identical reply, word count, and stop reason. No RNG, no wall-clock in the hot path.
+- **Honest miss.** When a query lands outside the Hamming threshold (default 96 bits), NRL-AI tells you the closest fragment distance and **never** synthesizes. Pure retrieval, pure composition.
+- **Corpus-bounded.** Every word in a reply came from a fragment you ingested. The lattice cannot hallucinate outside its corpus.
+- **Replay-locked bench.** The query stream is a pure function of `corpus_sha256` — two bench runs on the same index produce the same queries, so the only source of variation is real silicon wall-time.
+
+### Architecture reference
+
+See [`nrl-new-archietcture.MD`](./nrl-new-archietcture.MD) for the seven-prompt plan, the NRL-AI throughput math, and why this path hits ≥1000 wps on CPU while the libllama decode path physically cannot.
+
+---
+
+## Run a GGUF model (legacy libllama path)
+
+NRL also includes a full **GGUF runner (`llama.nrl`, P1)** where NRL is the execution supervisor and `libllama` (via `llama-cpp-python` or `llama-cli.exe`) owns the numerics. It reports a **four-metric TPS contract** — `executed_tps`, `virtual_tps`, `cache_tps`, `effective_tps` — with honest accounting banners.
+
+**Full architecture:** [`docs/nrl_gguf_runner_architecture.md`](./docs/nrl_gguf_runner_architecture.md). **Manifest grammar:** [`language/spec/nrl_manifest_v1.md`](./language/spec/nrl_manifest_v1.md). **Docs index:** [`docs/README.md`](./docs/README.md).
+
+### One-shot inference
+
+```powershell
+python -m nrlpy run models\phi-3-mini-4k-instruct.Q4_K_M.gguf `
+  --prompt "Tell me one short, surprising fact about space." `
+  --max-tokens 128 --seed 42 --chat-format phi3
+```
+
+```bash
+python -m nrlpy run models/phi-3-mini-4k-instruct.Q4_K_M.gguf \
+  --prompt "Tell me one short, surprising fact about space." \
+  --max-tokens 128 --seed 42 --chat-format phi3
+```
+
+Or via a `.nrl` v1 manifest (reference: [`language/examples/phi3_dense.nrl`](./language/examples/phi3_dense.nrl)):
+
+```bash
+python -m nrlpy gguf language/examples/phi3_dense.nrl
+```
+
+### Interactive chat REPL
+
+```bash
+python -m nrlpy chat models/phi-3-mini-4k-instruct.Q4_K_M.gguf \
+  --system "You are concise." --seed 7 --chat-format phi3
+```
+
+Inside the REPL, `/help` lists every slash command:
+
+| Command | Effect |
+|---|---|
+| `/clear` | reset conversation history (system prompt preserved) |
+| `/system <text>` | set system prompt (resets history for safety) |
+| `/tps` | session-aggregate four-metric TPS banner |
+| `/save <path>` / `/load <path>` | JSON snapshot; `/load` refuses snapshots recorded against a different `model_sha256` |
+| `/seed <n>` | change sampler seed for subsequent turns |
+| `/history` | compact `(role, length)` list |
+| `/quit` / `/exit` | leave |
+
+**Per-turn muscle memory.** The rendered full-history prompt is the FNV-1a64 cache key, so replaying the same `(system, history, user_text, sampler)` tuple hits a cached reply on any subsequent run. Cache lives under `$NRL_ROOT/cache/mm/<model_sha256>/`.
+
+### Backend selector
+
+Set `NRL_INFERENCE` to choose how inference actually happens:
+
+| Value | Behavior |
+|---|---|
+| `native` (default) | In-process `llama-cpp-python` (`pip install llama-cpp-python`). |
+| `cli` | Spawn `llama-cli.exe` once per request and stream stdout. Configure via `NRL_LLAMA_CLI=/path/to/llama-cli`. |
+| `stub` | Deterministic fake. No weights required. Used by CI and unit tests. |
+
+### The honesty hinge
+
+Until P2-Active (layer gate actually wired into `libllama`), **`virtual_tps == executed_tps`** on real runs. The banner prints this identity explicitly. The `omega-hybrid skip_ratio` you see in the "NRL lattice observation" block is **advisory only** — it's what NRL's lattice would skip under a balanced gate, measured in parallel with decode, never multiplied into the decode TPS math. See [`docs/nrl_gguf_runner_architecture.md`](./docs/nrl_gguf_runner_architecture.md) §1.0 for the full contract.
+
+### Native `nrl run <model>.gguf`
+
+The native `nrl.exe` currently **routes** GGUF paths to the Python orchestrator with an actionable message rather than silently shelling out — native C GGUF execution is P4 (see the runner architecture doc §6). The Python path is the supported surface today.
 
 ### Python (`nrlpy`)
 
@@ -211,6 +463,10 @@ Installs `nrl` and `nrlpy` under `~/.local/bin`, copies assets to `~/.local/shar
 | `nrl file <path.nrl>` / `nrl <path.nrl>` | Parse v0 control file and dispatch bench or run. |
 | `nrl brain-map` | Short probe + RSS + `PORT_*` table. |
 | `nrl inquire` / `nrl chat` | Deterministic help and intent stubs (no model dependency). |
+| `nrl run <model>.gguf` / `nrl <model>.gguf` | Prints actionable guidance pointing at the Python GGUF runner (see [Run a GGUF model](#run-a-gguf-model)). Direct C-side linkage is P4. |
+| `python -m nrlpy run <model>.gguf` | One-shot GGUF inference with four-metric TPS report (P1). |
+| `python -m nrlpy chat <model>.gguf` | Multi-turn REPL with per-turn muscle memory (`/help` inside). |
+| `python -m nrlpy gguf <manifest.nrl>` | Run a `.nrl` v1 manifest (`mode = gguf_run`). |
 | `nrlpy …` | See [`nrlpy/README.md`](./nrlpy/README.md); `pip install -e ./nrlpy` adds `nrlpy` to PATH on dev machines. |
 
 Full behavior: [`nrl-architecture.md`](./nrl-architecture.md), `engine/src/main.c`.
@@ -226,7 +482,7 @@ Full behavior: [`nrl-architecture.md`](./nrl-architecture.md), `engine/src/main.
 | `language/` | `.nrl` spec and examples — [`language/README.md`](./language/README.md) |
 | `benchmarks/` | Harnesses — [`benchmarks/README.md`](./benchmarks/README.md) |
 | `scripts/` | Install and release — [`scripts/README.md`](./scripts/README.md) |
-| `docs/` | Long-horizon safety / governance notes |
+| `docs/` | Architecture, manifest specs, governance, prior-art notes — index at [`docs/README.md`](./docs/README.md) |
 | `examples/` | Cross-surface demos |
 | Root | `CHANGELOG.md`, `CONTRIBUTING.md`, `SECURITY.md`, [`grok_review_handoff.md`](./grok_review_handoff.md) (external review brief) |
 
@@ -254,7 +510,7 @@ Release checks: [`scripts/release_check.ps1`](./scripts/release_check.ps1), [`sc
 
 ## License
 
-**RomanAILabs Business Source License 1.1 (RBSL 1.1).** Non-commercial research, education, and evaluation are permitted per [`LICENSE`](./LICENSE). Commercial use requires a separate agreement unless covered by the Additional Use Grant. Versions convert to **Apache 2.0** after the Change Date in the license text.
+**RomanAILabs Proprietary Source-Available Evaluation License 1.0.** This software is **NOT open source**. Reading, inspection, and one local evaluation copy are permitted only under [`LICENSE`](./LICENSE). Commercial, redistribution, derivative, hosted, AI-training, enterprise, and competing use requires a separate written agreement. Full intellectual property rights are retained by Daniel Harding / RomanAILabs.
 
 Enterprise: `daniel@romanailabs.com` · `romanailabs@gmail.com` · `romanailabs.com`
 

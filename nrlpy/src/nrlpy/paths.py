@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
 """Shared path resolution for control-plane tools (evidence, chat, CLI)."""
 
 from __future__ import annotations

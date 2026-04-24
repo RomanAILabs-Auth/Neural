@@ -1,0 +1,138 @@
+# Copyright (c) 2026 Daniel Harding - RomanAILabs. All Rights Reserved.
+name: python-ci
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+
+jobs:
+  lint-and-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ["3.11"]
+    runs-on: ${{ matrix.os }}
+
+    env:
+      # Force the deterministic fake backend so no GGUF model or llama-cpp-python
+      # install is required. nrlpy.gguf honors this at every entry point
+      # (see docs/nrl_gguf_runner_architecture.md §P1 and NRL_INFERENCE in
+      # language/spec/nrl_manifest_v1.md).
+      NRL_INFERENCE: stub
+      # Isolate any on-disk muscle-memory / evidence writes under the runner workspace
+      # so tests don't pick up stale state from previous runs.
+      NRL_ROOT: ${{ github.workspace }}/build/nrl_root_ci
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install build tools (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y build-essential
+
+      - name: Build native engine (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          chmod +x build.sh
+          ./build.sh Release 1
+
+      - name: Build native engine (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          # build.ps1 picks zig cc if present, falls back to MSVC. Windows CI
+          # images ship MSVC; skip engine build if zig isn't installed and the
+          # build script fails — Python unit tests use NRL_INFERENCE=stub and
+          # monkeypatch nrl_attest, so they don't hard-depend on the binary.
+          try { .\build.ps1 -Config Release } catch { Write-Host "engine build skipped: $_" }
+
+      - name: Install Python tooling
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install ruff mypy pytest
+
+      - name: Ruff (GGUF runner scope)
+        # Scoped to the files we own fully under the P1/P2-Shadow contract.
+        # Full-repo lint roll-up is tracked under docs/PRODUCTION_READINESS.md.
+        run: |
+          python -m ruff check nrlpy/src/nrlpy/gguf.py nrlpy/src/nrlpy/gguf_chat.py nrlpy/src/nrlpy/__init__.py nrlpy/tests/test_gguf.py nrlpy/tests/test_gguf_chat.py
+
+      - name: Ruff (full nrlpy, advisory)
+        continue-on-error: true
+        run: python -m ruff check nrlpy/src/nrlpy nrlpy/tests
+
+      - name: Mypy --strict (GGUF runner scope)
+        working-directory: nrlpy
+        run: python -m mypy --strict src/nrlpy/gguf.py src/nrlpy/gguf_chat.py src/nrlpy/__init__.py
+
+      - name: Pytest (GGUF + chat, stub backend — required)
+        # Targeted first so GGUF-specific regressions are visible without noise
+        # from pre-existing host-isolation issues in unrelated tests.
+        env:
+          PYTHONPATH: nrlpy/src
+        run: python -m pytest nrlpy/tests/test_gguf.py nrlpy/tests/test_gguf_chat.py -v
+
+      - name: Golden harness (stub mode — required)
+        # Cross-OS claim-governance gate. Verifies determinism, honesty hinge
+        # (virtual_tps == executed_tps in P1 / P2-Shadow), gate_skip_ratio == 0,
+        # and writes build/gguf_golden/gguf_golden.{json,md} for artifact diffs.
+        env:
+          PYTHONPATH: nrlpy/src
+        run: python benchmarks/gguf_golden.py --mode stub
+
+      - name: Golden harness (P2-Active simulation — required)
+        # Locks the flipped-hinge invariants with a NUMERIC override:
+        # virtual_tps > executed_tps, virtual_tps*(1-gate_skip_ratio) == executed_tps,
+        # banner explicitly labels the run as "P2-Active simulation".
+        env:
+          PYTHONPATH: nrlpy/src
+        run: python benchmarks/gguf_golden.py --mode p2active-sim
+
+      - name: Golden harness (P2-Active prefill cache — required)
+        # Locks the flipped-hinge invariants with the first STRUCTURAL gate:
+        # two sequential runs sharing a PrefillGate; turn 1 keeps the hinge,
+        # turn 2's shared prefix flips virtual_tps > executed_tps and banner
+        # labels "P2-Active (prefill cache)" (not simulation). On the native
+        # backend the same gate reading corresponds to real libllama KV reuse.
+        env:
+          PYTHONPATH: nrlpy/src
+        run: python benchmarks/gguf_golden.py --mode p2active-prefill
+
+      - name: Golden harness (muscle-memory replay — floor >= 1000 effective WPS)
+        # Replay lane only (not a ceiling on fresh decode). Optional floor is
+        # explicit so default `auto` stays measurement-only for operators.
+        env:
+          PYTHONPATH: nrlpy/src
+        run: python benchmarks/gguf_golden.py --mode mm-replay --mm-min-wps 1000
+
+      - name: WPS autopilot (JSON + MD artifacts)
+        env:
+          PYTHONPATH: nrlpy/src
+        run: python benchmarks/wps_autopilot.py --markdown build/wps_autopilot.md --min-mm-effective-wps 1000
+
+      - name: Upload golden artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gguf-golden-${{ matrix.os }}-py${{ matrix.python-version }}
+          path: |
+            build/gguf_golden/
+            build/wps_autopilot.json
+            build/wps_autopilot.md
+          if-no-files-found: ignore
+
+      - name: Pytest (full suite, best-effort)
+        # A handful of legacy tests read from real $NRL_ROOT / $USERPROFILE;
+        # they pass on clean CI runners but we do not fail the build on them
+        # until they're isolated. Track under docs/PRODUCTION_READINESS.md.
+        env:
+          PYTHONPATH: nrlpy/src
+        continue-on-error: true
+        run: python -m pytest nrlpy/tests -q
